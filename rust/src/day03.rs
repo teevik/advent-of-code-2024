@@ -1,16 +1,13 @@
-#![feature(test)]
-
+use aoc_runner_derive::aoc;
 use nom::{
-    Finish, IResult, Parser,
     branch::alt,
     bytes::complete::{tag, take},
     character::complete::one_of,
     combinator::{map_res, recognize, value},
     multi::many1,
     sequence::tuple,
+    Finish, IResult, Parser,
 };
-
-const INPUT: &str = include_str!("../../../inputs/day03.txt");
 
 type Multiplied = u32;
 
@@ -63,13 +60,15 @@ fn parse_input_2(input: &str) -> impl Iterator<Item = Token> {
     }
 }
 
-fn part_1(input: &str) -> u32 {
+#[aoc(day3, part1)]
+fn part1(input: &str) -> u32 {
     let lines = parse_input_1(input);
 
     lines.sum()
 }
 
-fn part_2(input: &str) -> u32 {
+#[aoc(day3, part2)]
+fn part2(input: &str) -> u32 {
     let lines = parse_input_2(input);
 
     let mut should_mul = true;
@@ -93,38 +92,24 @@ fn part_2(input: &str) -> u32 {
 
     sum
 }
-fn main() {
-    let part_1 = part_1(INPUT);
-    dbg!(part_1);
-
-    let part_2 = part_2(INPUT);
-    dbg!(part_2);
-}
 
 #[cfg(test)]
 mod tests {
-    extern crate test;
     use super::*;
 
-    #[test]
-    fn test_part_1() {
-        let result = part_1(INPUT);
-        assert_eq!(result, 167650499);
-    }
+    const EXAMPLE_1: &str =
+        "xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
 
     #[test]
-    fn test_part_2() {
-        let result = part_2(INPUT);
-        assert_eq!(result, 95846796);
+    fn part1_example() {
+        assert_eq!(part1(EXAMPLE_1), 161);
     }
 
-    #[bench]
-    fn bench_part_1(b: &mut test::Bencher) {
-        b.iter(|| part_1(INPUT));
-    }
+    const EXAMPLE_2: &str =
+        "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
 
-    #[bench]
-    fn bench_part_2(b: &mut test::Bencher) {
-        b.iter(|| part_2(INPUT));
+    #[test]
+    fn part2_example() {
+        assert_eq!(part2(EXAMPLE_2), 48);
     }
 }

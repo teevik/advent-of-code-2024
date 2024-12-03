@@ -4,16 +4,10 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+aoc-runner = "0.3.0"
+aoc-runner-derive = "0.3.0"
 itertools = "0.13"
 nom = "7.1"
-
-[dev-dependencies]
-criterion = { version = "0.5", features = ["html_reports"] }
-
-
-[[bench]]
-name = "aoc_2024"
-harness = false
 
 # bytemuck = { version = "1", features = ["derive"] }
 # itertools = "0.12"
