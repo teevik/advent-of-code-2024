@@ -19,15 +19,14 @@ fn parse_input(input: &str) -> impl Iterator<Item = Entry> + '_ {
 }
 
 pub fn part1(input: &str) -> u32 {
-    let mut lefts = BinaryHeap::new();
-    let mut rights = BinaryHeap::new();
+    let (mut lefts, mut rights): (Vec<_>, Vec<_>) = parse_input(input)
+        .map(|entry| (entry.left, entry.right))
+        .unzip();
 
-    for entry in parse_input(input) {
-        lefts.push(entry.left);
-        rights.push(entry.right);
-    }
+    lefts.sort_unstable();
+    rights.sort_unstable();
 
-    let sum = zip(lefts.into_iter_sorted(), rights.into_iter_sorted())
+    let sum = zip(lefts, rights)
         .map(|(left, right)| left.abs_diff(right))
         .sum::<u32>();
 
@@ -70,5 +69,17 @@ mod tests {
     #[test]
     fn part2_example() {
         assert_eq!(part2(EXAMPLE), 31);
+    }
+
+    const INPUT: &str = include_str!("../../inputs/day01.txt");
+
+    #[test]
+    fn part1_real() {
+        assert_eq!(part1(INPUT), 1941353);
+    }
+
+    #[test]
+    fn part2_real() {
+        assert_eq!(part2(INPUT), 22539317);
     }
 }

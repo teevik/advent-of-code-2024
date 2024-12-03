@@ -2,9 +2,9 @@
 #![feature(portable_simd)]
 
 pub mod day01;
-// mod day01_fast;
+pub mod day01_fast;
 // mod day02;
-// mod day03;
+pub mod day03;
 
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize

@@ -33,7 +33,8 @@ bstr = "1"
 # num = "0.4.1"
 # num-traits = "0.2.17"
 # roots = "0.0.8"
-# radsort = "0.1.0"
+radsort = "0.1.0"
+chumsky = "0.9.3"
 # pathfinding = "4"
 # bit-set = "0.5"
 
@@ -48,3 +49,4 @@ harness = false
 lto = true
 codegen-units = 1
 panic = "abort"
+debug = true

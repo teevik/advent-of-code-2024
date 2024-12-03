@@ -1,4 +1,3 @@
-use aoc_runner_derive::aoc;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take},
@@ -9,7 +8,11 @@ use nom::{
     Finish, IResult, Parser,
 };
 
-type Multiplied = u32;
+fn parse_u32(input: &str) -> IResult<&str, u32> {
+    map_res(recognize(many1(one_of("0123456789"))), |str: &str| {
+        str.parse::<u32>()
+    })(input)
+}
 
 fn parse_multiplied(input: &str) -> IResult<&str, u32> {
     tuple((tag("mul("), parse_u32, tag(","), parse_u32, tag(")")))
@@ -19,26 +22,9 @@ fn parse_multiplied(input: &str) -> IResult<&str, u32> {
 
 #[derive(Debug, Clone)]
 enum Token {
-    Mul(Multiplied),
+    Mul(u32),
     Do,
     Dont,
-}
-
-fn parse_u32(input: &str) -> IResult<&str, u32> {
-    map_res(recognize(many1(one_of("0123456789"))), |str: &str| {
-        str.parse::<u32>()
-    })(input)
-}
-
-fn parse_input_1(input: &str) -> impl Iterator<Item = Multiplied> {
-    let output = many1(alt((parse_multiplied.map(Some), value(None, take(1u8)))))
-        .parse(input)
-        .finish();
-
-    match output {
-        Ok((_, multipliers)) => multipliers.into_iter().flatten(),
-        Err(e) => panic!("invalid input: {}", e),
-    }
 }
 
 fn parse_input_2(input: &str) -> impl Iterator<Item = Token> {
@@ -60,15 +46,15 @@ fn parse_input_2(input: &str) -> impl Iterator<Item = Token> {
     }
 }
 
-#[aoc(day3, part1)]
-fn part1(input: &str) -> u32 {
-    let lines = parse_input_1(input);
+pub fn part1(input: &str) -> u32 {
+    let mut parser = many1(alt((parse_multiplied.map(Some), value(None, take(1u8)))));
 
-    lines.sum()
+    let (_, output) = parser(input).finish().expect("invalid input");
+
+    output.into_iter().flatten().sum()
 }
 
-#[aoc(day3, part2)]
-fn part2(input: &str) -> u32 {
+pub fn part2(input: &str) -> u32 {
     let lines = parse_input_2(input);
 
     let mut should_mul = true;
@@ -111,5 +97,17 @@ mod tests {
     #[test]
     fn part2_example() {
         assert_eq!(part2(EXAMPLE_2), 48);
+    }
+
+    const INPUT: &str = include_str!("../../inputs/day03.txt");
+
+    #[test]
+    fn part1_real() {
+        assert_eq!(part1(INPUT), 167650499);
+    }
+
+    #[test]
+    fn part2_real() {
+        assert_eq!(part2(INPUT), 95846796);
     }
 }
