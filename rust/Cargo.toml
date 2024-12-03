@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-aoc-runner = "0.3.0"
-aoc-runner-derive = "0.3.0"
-itertools = "0.13"
-nom = "7.1"
+
+# aoc-runner = "0.3.0"
+# aoc-runner-derive = "0.3.0"
+itertools = "0.12"
+nom = "7"
 
 # bytemuck = { version = "1", features = ["derive"] }
 # itertools = "0.12"
@@ -18,7 +19,7 @@ nom = "7.1"
 # core_simd = { git = "https://github.com/rust-lang/portable-simd" }
 # arrayvec = "0.7"
 # smallvec = "1"
-# rustc-hash = "1"
+rustc-hash = "1"
 # bitvec = "1"
 # dashmap = "5"
 # atoi_radix10 = { git = "https://github.com/gilescope/atoi_radix10" }
@@ -29,7 +30,7 @@ nom = "7.1"
 # pollster = "0.3"
 # wgpu = "0.18"
 # mimalloc = { version = "0.1", default-features = false }
-# bstr = "1"
+bstr = "1"
 # num = "0.4.1"
 # num-traits = "0.2.17"
 # roots = "0.0.8"

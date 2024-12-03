@@ -1,6 +1,8 @@
 #![feature(binary_heap_into_iter_sorted)]
+#![feature(portable_simd)]
 
 mod day01;
+mod day01_fast;
 mod day02;
 mod day03;
 
