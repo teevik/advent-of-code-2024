@@ -1,11 +1,11 @@
 use nom::{
+    Finish, IResult, Parser,
     branch::alt,
     bytes::complete::{tag, take},
     character::complete::one_of,
     combinator::{map_res, recognize, value},
     multi::many1,
     sequence::tuple,
-    Finish, IResult, Parser,
 };
 
 fn parse_u32(input: &str) -> IResult<&str, u32> {
@@ -27,25 +27,6 @@ enum Token {
     Dont,
 }
 
-fn parse_input_2(input: &str) -> impl Iterator<Item = Token> {
-    let output = many1(alt((
-        alt((
-            parse_multiplied.map(Token::Mul),
-            value(Token::Do, tag("do()")),
-            value(Token::Dont, tag("don't()")),
-        ))
-        .map(Some),
-        value(None, take(1u8)),
-    )))
-    .parse(input)
-    .finish();
-
-    match output {
-        Ok((_, tokens)) => tokens.into_iter().flatten(),
-        Err(e) => panic!("invalid input: {}", e),
-    }
-}
-
 pub fn part1(input: &str) -> u32 {
     let mut parser = many1(alt((parse_multiplied.map(Some), value(None, take(1u8)))));
 
@@ -55,12 +36,22 @@ pub fn part1(input: &str) -> u32 {
 }
 
 pub fn part2(input: &str) -> u32 {
-    let lines = parse_input_2(input);
+    let mut parser = many1(alt((
+        alt((
+            parse_multiplied.map(Token::Mul),
+            value(Token::Do, tag("do()")),
+            value(Token::Dont, tag("don't()")),
+        ))
+        .map(Some),
+        value(None, take(1u8)),
+    )));
+
+    let (_, tokens) = parser(input).finish().expect("invalid input");
 
     let mut should_mul = true;
     let mut sum = 0;
 
-    for token in lines {
+    for token in tokens.into_iter().flatten() {
         match token {
             Token::Mul(multiplied) => {
                 if should_mul {

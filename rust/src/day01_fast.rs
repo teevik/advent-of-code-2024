@@ -1,16 +1,9 @@
 #![feature(portable_simd)]
 
-use rustc_hash::FxHashMap;
 use std::{
     iter::zip,
-    simd::{cmp::SimdOrd, num::SimdUint, u8x16, Simd},
+    simd::{cmp::SimdOrd, num::SimdUint, u8x16, u32x32},
 };
-
-#[derive(Default)]
-struct Entry {
-    left: u32,
-    right: u32,
-}
 
 pub fn part1(input: &str) -> u32 {
     let input = input.as_bytes();
@@ -42,22 +35,19 @@ pub fn part1(input: &str) -> u32 {
         })
         .unzip();
 
-    radsort::sort(&mut lefts);
-    radsort::sort(&mut rights);
+    lefts.sort_unstable();
+    rights.sort_unstable();
 
     let mut sum = 0;
 
-    const LANES: usize = 32;
-
-    let lefts = lefts.chunks_exact(LANES);
+    let lefts = lefts.chunks_exact(32);
     let lefts_remainder = lefts.remainder();
-    let rights = rights.chunks_exact(LANES);
+    let rights = rights.chunks_exact(32);
     let rights_remainder = rights.remainder();
 
     for (lefts, rights) in zip(lefts, rights) {
-        type MySimd = Simd<u32, LANES>;
-        let lefts = MySimd::from_slice(lefts);
-        let rights = MySimd::from_slice(rights);
+        let lefts = u32x32::from_slice(lefts);
+        let rights = u32x32::from_slice(rights);
 
         let max = lefts.simd_max(rights);
         let min = lefts.simd_min(rights);
@@ -85,7 +75,9 @@ pub fn part2(input: &str) -> u32 {
 
     let offset = u8x16::splat(b'0');
 
-    let mut entries = FxHashMap::<u32, Entry>::default();
+    let mut numbers: Vec<u32> = Vec::with_capacity(1000);
+    let mut counts: [u16; 100000] = [0; 100000];
+
     for row in rows {
         // SAFETY: probably not :D
         let array_ref: &[u8; 16] = unsafe { &*(row as *const _ as *const _) };
@@ -98,14 +90,17 @@ pub fn part2(input: &str) -> u32 {
         let left = a as u32 * 10000 + b as u32 * 1000 + c as u32 * 100 + d as u32 * 10 + e as u32;
         let right = f as u32 * 10000 + g as u32 * 1000 + h as u32 * 100 + i as u32 * 10 + j as u32;
 
-        // dbg!(left, right);
-        entries.entry(left).or_default().left += 1;
-        entries.entry(right).or_default().right += 1;
+        numbers.push(left);
+        counts[right as usize] += 1;
+
+        // // dbg!(left, right);
+        // entries.entry(left).or_default().left += 1;
+        // entries.entry(right).or_default().right += 1;
     }
 
-    entries
+    numbers
         .into_iter()
-        .map(|(key, entry)| key * entry.left * entry.right)
+        .map(|number| number * counts[number as usize] as u32)
         .sum()
 }
 
