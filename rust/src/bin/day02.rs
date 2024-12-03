@@ -15,17 +15,18 @@ fn parse_input(input: &str) -> impl Iterator<Item = Vec<i32>> {
     input.lines().map(parse_line)
 }
 
-fn is_valid_in_direction(numbers: &[i32], direction: i32) -> bool {
+fn is_valid(numbers: &[i32]) -> bool {
+    let [first, second, ..] = numbers else {
+        panic!("invalid input")
+    };
+    let direction = (second - first).signum();
+
     numbers.iter().tuple_windows().all(|(prev, current)| {
         let correct_direction = (current - prev).signum() == direction;
         let correct_difference = (1..=3).contains(&prev.abs_diff(*current));
 
         correct_direction && correct_difference
     })
-}
-
-fn is_valid(numbers: &[i32]) -> bool {
-    is_valid_in_direction(numbers, 1) || is_valid_in_direction(numbers, -1)
 }
 
 fn part_1(input: &str) -> usize {

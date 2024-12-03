@@ -1,3 +1,7 @@
+#![feature(binary_heap_into_iter_sorted)]
+
+pub mod day01;
+
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize
     where

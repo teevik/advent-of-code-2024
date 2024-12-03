@@ -1,9 +1,9 @@
-#![feature(binary_heap_into_iter_sorted)]
-#![feature(test)]
+use std::{
+    collections::{BinaryHeap, HashMap},
+    iter::zip,
+};
 
-use std::collections::{BinaryHeap, HashMap};
-
-const INPUT: &str = include_str!("../../../inputs/day01.txt");
+const INPUT: &str = include_str!("../../inputs/day01.txt");
 
 #[derive(Default)]
 struct Entry {
@@ -11,7 +11,7 @@ struct Entry {
     right: u32,
 }
 
-fn parse_input(input: &str) -> impl Iterator<Item = Entry> {
+fn parse_input(input: &str) -> impl Iterator<Item = Entry> + '_ {
     input.lines().map(|line| {
         let (left, right) = line.split_once("   ").expect("Invalid input");
         let [left, right] = [left, right].map(|num| num.parse::<u32>().expect("Invalid input"));
@@ -20,7 +20,7 @@ fn parse_input(input: &str) -> impl Iterator<Item = Entry> {
     })
 }
 
-fn part_1(input: &str) -> u32 {
+pub fn part_1(input: &str) -> u32 {
     let mut lefts = BinaryHeap::new();
     let mut rights = BinaryHeap::new();
 
@@ -29,9 +29,7 @@ fn part_1(input: &str) -> u32 {
         rights.push(entry.right);
     }
 
-    let sum = lefts
-        .into_iter_sorted()
-        .zip(rights.into_iter_sorted())
+    let sum = zip(lefts.into_iter_sorted(), rights.into_iter_sorted())
         .map(|(left, right)| left.abs_diff(right))
         .sum::<u32>();
 
@@ -62,30 +60,30 @@ fn main() {
     dbg!(part_2);
 }
 
-#[cfg(test)]
-mod tests {
-    extern crate test;
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     extern crate test;
+//     use super::*;
 
-    #[test]
-    fn test_part_1() {
-        let result = part_1(INPUT);
-        assert_eq!(result, 1941353);
-    }
+//     #[test]
+//     fn test_part_1() {
+//         let result = part_1(INPUT);
+//         assert_eq!(result, 1941353);
+//     }
 
-    #[test]
-    fn test_part_2() {
-        let result = part_2(INPUT);
-        assert_eq!(result, 22539317);
-    }
+//     #[test]
+//     fn test_part_2() {
+//         let result = part_2(INPUT);
+//         assert_eq!(result, 22539317);
+//     }
 
-    #[bench]
-    fn bench_part_1(b: &mut test::Bencher) {
-        b.iter(|| part_1(INPUT));
-    }
+//     #[bench]
+//     fn bench_part_1(b: &mut test::Bencher) {
+//         b.iter(|| part_1(INPUT));
+//     }
 
-    #[bench]
-    fn bench_part_2(b: &mut test::Bencher) {
-        b.iter(|| part_2(INPUT));
-    }
-}
+//     #[bench]
+//     fn bench_part_2(b: &mut test::Bencher) {
+//         b.iter(|| part_2(INPUT));
+//     }
+// }

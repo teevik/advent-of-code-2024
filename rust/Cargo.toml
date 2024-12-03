@@ -1,7 +1,49 @@
 [package]
-name = "aoc-2024"
+name = "aoc_2024"
 version = "0.1.0"
-edition = "2024"
+edition = "2018"
 
 [dependencies]
-itertools = "0.13.0"
+itertools = "0.13"
+nom = "7.1"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+
+[[bench]]
+name = "aoc_2024"
+harness = false
+
+# bytemuck = { version = "1", features = ["derive"] }
+# itertools = "0.12"
+# rayon = "1"
+# regex = "1"
+# parse-display = "0.8"
+# memchr = "2"
+# core_simd = { git = "https://github.com/rust-lang/portable-simd" }
+# arrayvec = "0.7"
+# smallvec = "1"
+# rustc-hash = "1"
+# bitvec = "1"
+# dashmap = "5"
+# atoi_radix10 = { git = "https://github.com/gilescope/atoi_radix10" }
+# btoi = "0.4"
+# nom = "7"
+# rangemap = "1.4.0"
+# flume = "0.11"
+# pollster = "0.3"
+# wgpu = "0.18"
+# mimalloc = { version = "0.1", default-features = false }
+# bstr = "1"
+# num = "0.4.1"
+# num-traits = "0.2.17"
+# roots = "0.0.8"
+# radsort = "0.1.0"
+# pathfinding = "4"
+# bit-set = "0.5"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
