@@ -1,10 +1,10 @@
 #![feature(binary_heap_into_iter_sorted)]
 #![feature(portable_simd)]
 
-mod day01;
-mod day01_fast;
-mod day02;
-mod day03;
+pub mod day01;
+// mod day01_fast;
+// mod day02;
+// mod day03;
 
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize
@@ -21,5 +21,3 @@ impl<I: Iterator> IterExt for I {
         self.fold(0, |acc, item| if predicate(item) { acc + 1 } else { acc })
     }
 }
-
-aoc_runner_derive::aoc_lib! { year = 2024 }

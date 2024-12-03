@@ -1,4 +1,3 @@
-use aoc_runner_derive::aoc;
 use std::{
     collections::{BinaryHeap, HashMap},
     iter::zip,
@@ -19,8 +18,7 @@ fn parse_input(input: &str) -> impl Iterator<Item = Entry> + '_ {
     })
 }
 
-#[aoc(day1, part1)]
-fn part1(input: &str) -> u32 {
+pub fn part1(input: &str) -> u32 {
     let mut lefts = BinaryHeap::new();
     let mut rights = BinaryHeap::new();
 
@@ -36,8 +34,7 @@ fn part1(input: &str) -> u32 {
     sum
 }
 
-#[aoc(day1, part2)]
-fn part2(input: &str) -> u32 {
+pub fn part2(input: &str) -> u32 {
     let mut entries = HashMap::<u32, Entry>::new();
 
     for entry in parse_input(input) {
