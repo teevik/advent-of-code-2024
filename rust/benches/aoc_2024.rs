@@ -1,22 +1,24 @@
 use aoc_2024::*;
 use criterion::criterion_main;
 
+macro_rules! bench_day {
+    ($c:expr, $day_mod:ident, $input:expr) => {
+        $c.bench_function(concat!(stringify!($day_mod), " part1"), |b| {
+            b.iter(|| ($day_mod::part1(include_str!(concat!("../../inputs/", $input)))));
+        });
+
+        $c.bench_function(concat!(stringify!($day_mod), " part2"), |b| {
+            b.iter(|| ($day_mod::part2(include_str!(concat!("../../inputs/", $input)))));
+        });
+    };
+}
+
 fn criterion_benchmark(c: &mut criterion::Criterion) {
-    c.bench_function("day01 part1", |b| {
-        b.iter(|| (day01::part1(include_str!("../../inputs/day01.txt"))));
-    });
-
-    c.bench_function("day01 part2", |b| {
-        b.iter(|| (day01::part2(include_str!("../../inputs/day01.txt"))));
-    });
-
-    c.bench_function("day01 part1 fast", |b| {
-        b.iter(|| (day01_fast::part1(include_str!("../../inputs/day01.txt"))));
-    });
-
-    c.bench_function("day01 part2 fast", |b| {
-        b.iter(|| (day01_fast::part2(include_str!("../../inputs/day01.txt"))));
-    });
+    bench_day!(c, day01, "day01.txt");
+    bench_day!(c, day01_fast, "day01.txt");
+    bench_day!(c, day02, "day02.txt");
+    bench_day!(c, day03, "day03.txt");
+    bench_day!(c, day04, "day04.txt");
 }
 
 criterion::criterion_group!(benches, criterion_benchmark);

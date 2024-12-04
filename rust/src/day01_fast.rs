@@ -1,4 +1,5 @@
 #![feature(portable_simd)]
+#![feature(slice_as_chunks)]
 
 use std::{
     iter::zip,
@@ -12,11 +13,12 @@ pub fn part1(input: &str) -> u32 {
     const WIDTH: usize = DIGITS + "   ".len() + DIGITS;
     const WIDTH_WITH_NEWLINE: usize = WIDTH + 1;
 
-    let rows = input.chunks(WIDTH_WITH_NEWLINE);
+    let rows = unsafe { input.as_chunks_unchecked::<WIDTH_WITH_NEWLINE>() };
 
     let offset = u8x16::splat(b'0');
 
     let (mut lefts, mut rights): (Vec<_>, Vec<_>) = rows
+        .into_iter()
         .map(|row| {
             // SAFETY: probably not :D
             let row: &[u8; 16] = unsafe { &*(row as *const _ as *const _) };
@@ -35,8 +37,10 @@ pub fn part1(input: &str) -> u32 {
         })
         .unzip();
 
-    lefts.sort_unstable();
-    rights.sort_unstable();
+    // lefts.sort_unstable();
+    // rights.sort_unstable();
+    radsort::sort(&mut lefts);
+    radsort::sort(&mut rights);
 
     let mut sum = 0;
 
@@ -71,7 +75,7 @@ pub fn part2(input: &str) -> u32 {
     const WIDTH: usize = DIGITS + "   ".len() + DIGITS;
     const WIDTH_WITH_NEWLINE: usize = WIDTH + 1;
 
-    let rows = input.chunks(WIDTH_WITH_NEWLINE);
+    let rows = unsafe { input.as_chunks_unchecked::<WIDTH_WITH_NEWLINE>() };
 
     let offset = u8x16::splat(b'0');
 
@@ -92,10 +96,6 @@ pub fn part2(input: &str) -> u32 {
 
         numbers.push(left);
         counts[right as usize] += 1;
-
-        // // dbg!(left, right);
-        // entries.entry(left).or_default().left += 1;
-        // entries.entry(right).or_default().right += 1;
     }
 
     numbers

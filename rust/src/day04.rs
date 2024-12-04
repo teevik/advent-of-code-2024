@@ -1,9 +1,6 @@
-use std::{
-    collections::{BinaryHeap, HashMap},
-    iter::zip,
-};
+use ndarray::Array2;
 
-pub fn part1(input: &str) -> u32 {
+fn parse_grid(input: &str) -> Array2<char> {
     let grid = input
         .lines()
         .map(|line| line.chars().collect::<Vec<_>>())
@@ -12,147 +9,74 @@ pub fn part1(input: &str) -> u32 {
     let height = grid.len();
     let width = grid[0].len();
 
+    Array2::from_shape_vec((height, width), grid.into_iter().flatten().collect())
+        .expect("invalid input")
+}
+
+pub fn part1(input: &str) -> usize {
+    let grid = parse_grid(input);
+
     let search_word = "XMAS";
+    let rev_word = &search_word.chars().rev().collect::<String>();
 
-    let mut sum = 0;
-    // horizontal
-    for y in 0..height {
-        for x in 0..width - 3 {
-            // forward
-            for (i, c) in search_word.chars().enumerate() {
-                if grid[y][x + i] != c {
-                    break;
-                }
+    let diagonal_indices = [[(0, 0), (1, 1), (2, 2), (3, 3)], [
+        (3, 0),
+        (2, 1),
+        (1, 2),
+        (0, 3),
+    ]];
 
-                if i == 3 {
-                    sum += 1;
-                }
-            }
+    let horizontals = grid
+        .windows((4, 1))
+        .into_iter()
+        .map(|window| window.iter().collect::<String>());
 
-            // backwards
-            for (i, c) in search_word.chars().rev().enumerate() {
-                if grid[y][x + i] != c {
-                    break;
-                }
+    let verticals = grid
+        .windows((1, 4))
+        .into_iter()
+        .map(|window| window.iter().collect::<String>());
 
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-        }
-    }
+    let diagonals = grid.windows((4, 4)).into_iter().flat_map(|window| {
+        diagonal_indices.iter().map(move |indices| {
+            indices
+                .iter()
+                .map(|(y, x)| window[(*y, *x)])
+                .collect::<String>()
+        })
+    });
 
-    // vertical
-    for x in 0..width {
-        for y in 0..height - 3 {
-            // forward
-            for (i, c) in search_word.chars().enumerate() {
-                if grid[y + i][x] != c {
-                    break;
-                }
-
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-
-            // backwards
-            for (i, c) in search_word.chars().rev().enumerate() {
-                if grid[y + i][x] != c {
-                    break;
-                }
-
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-        }
-    }
-
-    // diagnonal
-    for y in 0..height - 3 {
-        for x in 0..width - 3 {
-            // forward
-            for (i, c) in search_word.chars().enumerate() {
-                if grid[y + i][x + i] != c {
-                    break;
-                }
-
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-
-            // backwards
-            for (i, c) in search_word.chars().rev().enumerate() {
-                if grid[y + i][x + i] != c {
-                    break;
-                }
-
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-        }
-    }
-
-    // anti-diagonal
-    for y in 0..height - 3 {
-        for x in 3..width {
-            // forward
-            for (i, c) in search_word.chars().enumerate() {
-                if grid[y + i][x - i] != c {
-                    break;
-                }
-
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-
-            // backwards
-            for (i, c) in search_word.chars().rev().enumerate() {
-                if grid[y + i][x - i] != c {
-                    break;
-                }
-
-                if i == 3 {
-                    sum += 1;
-                }
-            }
-        }
-    }
+    let sum = horizontals
+        .chain(verticals)
+        .chain(diagonals)
+        .filter(|window| window == search_word || window == rev_word)
+        .count();
 
     sum
 }
 
-pub fn part2(input: &str) -> u32 {
-    let grid = input
-        .lines()
-        .map(|line| line.chars().collect::<Vec<_>>())
-        .collect::<Vec<_>>();
+pub fn part2(input: &str) -> usize {
+    let grid = parse_grid(input);
 
-    let height = grid.len();
-    let width = grid[0].len();
+    let search_word = "MAS";
+    let rev_word = search_word.chars().rev().collect::<String>();
 
-    let mut sum = 0;
+    let diagonal_indices = [[(0, 0), (1, 1), (2, 2)], [(2, 0), (1, 1), (0, 2)]];
 
-    for y in 0..height - 2 {
-        for x in 0..width - 2 {
-            if grid[y + 1][x + 1] != 'A' {
-                continue;
-            }
-
-            let first_dignonal = (grid[y][x] == 'M' && grid[y + 2][x + 2] == 'S')
-                || (grid[y][x] == 'S' && grid[y + 2][x + 2] == 'M');
-            let second_dignonal = (grid[y + 2][x] == 'M' && grid[y][x + 2] == 'S')
-                || (grid[y + 2][x] == 'S' && grid[y][x + 2] == 'M');
-
-            if first_dignonal && second_dignonal {
-                sum += 1;
-            }
-        }
-    }
+    let sum = grid
+        .windows((3, 3))
+        .into_iter()
+        .filter(|window| {
+            diagonal_indices
+                .iter()
+                .map(move |indices| {
+                    indices
+                        .iter()
+                        .map(|(y, x)| window[(*y, *x)])
+                        .collect::<String>()
+                })
+                .all(|window| window == search_word || window == rev_word)
+        })
+        .count();
 
     sum
 }

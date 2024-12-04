@@ -1,5 +1,4 @@
 use crate::IterExt;
-use aoc_runner_derive::aoc;
 use itertools::Itertools;
 
 fn parse_line(line: &str) -> Vec<i32> {
@@ -26,8 +25,7 @@ fn is_valid(numbers: &[i32]) -> bool {
     })
 }
 
-#[aoc(day2, part1)]
-fn part1(input: &str) -> usize {
+pub fn part1(input: &str) -> usize {
     let lines = parse_input(input);
 
     let safe_lines = lines.count_when(|numbers| is_valid(&numbers));
@@ -35,8 +33,7 @@ fn part1(input: &str) -> usize {
     safe_lines
 }
 
-#[aoc(day2, part2)]
-fn part2(input: &str) -> usize {
+pub fn part2(input: &str) -> usize {
     let lines = parse_input(input);
 
     let safe_lines = lines.count_when(|numbers| {
@@ -71,5 +68,17 @@ mod tests {
     #[test]
     fn part2_example() {
         assert_eq!(part2(EXAMPLE), 4);
+    }
+
+    const INPUT: &str = include_str!("../../inputs/day02.txt");
+
+    #[test]
+    fn part1_real() {
+        assert_eq!(part1(INPUT), 407);
+    }
+
+    #[test]
+    fn part2_real() {
+        assert_eq!(part2(INPUT), 459);
     }
 }
