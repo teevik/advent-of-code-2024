@@ -1,7 +1,4 @@
-use std::{
-    collections::{BinaryHeap, HashMap},
-    iter::zip,
-};
+use std::{collections::HashMap, iter::zip};
 
 #[derive(Default)]
 struct Entry {

@@ -17,6 +17,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     bench_day!(c, day01, "day01.txt");
     bench_day!(c, day01_fast, "day01.txt");
     bench_day!(c, day02, "day02.txt");
+    bench_day!(c, day02_fast, "day02.txt");
     bench_day!(c, day03, "day03.txt");
     bench_day!(c, day04, "day04.txt");
 }
