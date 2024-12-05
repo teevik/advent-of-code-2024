@@ -30,20 +30,21 @@ pub fn part1(input: &str) -> usize {
     let lines = input.as_bytes().lines();
     const LINES: usize = 1000;
 
-    let lines = lines.map(|line| {
-        line.split_str(" ")
-            .map(|number| {
-                let first_digit = number[0] - b'0';
-                let second_digit = number[1] - b'0';
+    // let lines = lines.map(|line| {
+    //     line.split_str(" ")
+    //         .map(|number| {
+    //             let first_digit = number[0] - b'0';
+    //             let second_digit = number[1] - b'0';
 
-                (first_digit * 10 + second_digit) as i32
-            })
-            .collect()
-    });
+    //             (first_digit * 10 + second_digit) as i32
+    //         })
+    //         .collect()
+    // });
 
-    let safe_lines = lines.count_when(|numbers| is_valid(&numbers));
+    // let safe_lines = lines.count_when(|numbers| is_valid(&numbers));
 
-    safe_lines
+    // safe_lines
+    todo!()
 }
 
 pub fn part2(input: &str) -> usize {
