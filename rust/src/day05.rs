@@ -24,8 +24,6 @@ fn has_correct_ordering(line: &[u8], numbers_after_this: &HashMap<u8, Vec<u8>>) 
 pub fn part1(input: &str) -> usize {
     let (page_ordering, updates) = input.split_once("\n\n").expect("a");
 
-    // dbg!(updates);
-
     let mut numbers_after_this = HashMap::<u8, Vec<u8>>::new();
 
     for line in page_ordering.lines() {
@@ -38,28 +36,11 @@ pub fn part1(input: &str) -> usize {
 
     let mut sum = 0;
     for line in updates.lines() {
-        let mut is_valid = true;
-
         let numbers = line
             .split(',')
             .map(|n| n.parse::<u8>().unwrap())
             .collect_vec();
 
-        // let mut existing = HashSet::new();
-
-        // for number in numbers.iter() {
-        //     if let Some(should_be_after) = numbers_after_this.get(&number) {
-        //         if should_be_after
-        //             .iter()
-        //             .any(|should_be_after| existing.contains(should_be_after))
-        //         {
-        //             is_valid = false;
-        //             break;
-        //         }
-        //     }
-
-        //     existing.insert(number);
-        // }
         let is_valid = has_correct_ordering(&numbers, &numbers_after_this);
 
         if is_valid {
@@ -67,12 +48,6 @@ pub fn part1(input: &str) -> usize {
             let middle = numbers[middle_point];
             sum += middle as usize;
         }
-
-        // let numbers = line
-        //     .split(',')
-        //     .map(|n| n.parse::<u8>().unwrap())
-        //     .collect_vec();
-        // dbg!(is_valid);
     }
 
     sum
@@ -80,8 +55,6 @@ pub fn part1(input: &str) -> usize {
 
 pub fn part2(input: &str) -> usize {
     let (page_ordering, updates) = input.split_once("\n\n").expect("a");
-
-    // dbg!(updates);
 
     let mut numbers_after_this = HashMap::<u8, Vec<u8>>::new();
 
@@ -116,9 +89,6 @@ pub fn part2(input: &str) -> usize {
                 true => std::cmp::Ordering::Greater,
                 false => std::cmp::Ordering::Less,
             });
-            // while !has_correct_ordering(&numbers, &numbers_after_this) {
-            //     numbers.shuffle(&mut random);
-            // }
 
             assert!(has_correct_ordering(&numbers, &numbers_after_this));
 
@@ -126,76 +96,64 @@ pub fn part2(input: &str) -> usize {
             let middle = numbers[middle_point];
             sum += middle as usize;
         }
-
-        // if !has_correct_ordering(&numbers, &numbers_after_this) {
-        //     // while !has_correct_ordering(&numbers, &numbers_after_this) {
-        //     //     numbers.shuffle(&mut random);
-        //     // }
-
-        //     let mut existing = HashSet::new();
-
-        //     for (i, number) in numbers.clone().iter().enumerate() {
-        //         if let Some(should_be_after) = numbers_after_this.get(&number) {
-        //             if should_be_after
-        //                 .iter()
-        //                 .any(|should_be_after| existing.contains(should_be_after))
-        //             {
-        //                 let mut i = i;
-        //                 while !has_correct_ordering(&numbers, &numbers_after_this) {
-        //                     numbers.swap(i, i + 1);
-        //                     i += 1;
-        //                 }
-        //                 // numbers.swap(i, i - 1);
-        //             }
-        //         }
-
-        //         existing.insert(number);
-        //     }
-
-        //     let middle_point = numbers.len() / 2;
-        //     let middle = numbers[middle_point];
-        //     sum += middle as usize;
-        // }
     }
 
     sum
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     const EXAMPLE: &str = "MMMSXXMASM
-// MSAMXMSMSA
-// AMXSXMAAMM
-// MSAMASMSMX
-// XMASAMXAMM
-// XXAMMXXAMA
-// SMSMSASXSS
-// SAXAMASAAA
-// MAMMMXMMMM
-// MXMXAXMASX
-// ";
+    const EXAMPLE: &str = "47|53
+97|13
+97|61
+97|47
+75|29
+61|13
+75|53
+29|13
+97|29
+53|29
+61|53
+97|53
+61|29
+47|13
+75|47
+97|75
+47|61
+75|61
+47|29
+75|13
+53|13
 
-//     #[test]
-//     fn part1_example() {
-//         assert_eq!(part1(EXAMPLE), 18);
-//     }
+75,47,61,53,29
+97,61,53,29,13
+75,29,13
+75,97,47,61,53
+61,13,29
+97,13,75,29,47
+";
 
-//     #[test]
-//     fn part2_example() {
-//         assert_eq!(part2(EXAMPLE), 9);
-//     }
+    #[test]
+    fn part1_example() {
+        assert_eq!(part1(EXAMPLE), 143);
+    }
 
-//     const INPUT: &str = include_str!("../../inputs/day04.txt");
+    #[test]
+    fn part2_example() {
+        assert_eq!(part2(EXAMPLE), 123);
+    }
 
-//     #[test]
-//     fn part1_real() {
-//         assert_eq!(part1(INPUT), 2613);
-//     }
+    const INPUT: &str = include_str!("../../inputs/day05.txt");
 
-//     #[test]
-//     fn part2_real() {
-//         assert_eq!(part2(INPUT), 1905);
-//     }
-// }
+    #[test]
+    fn part1_real() {
+        assert_eq!(part1(INPUT), 4135);
+    }
+
+    #[test]
+    fn part2_real() {
+        assert_eq!(part2(INPUT), 5285);
+    }
+}

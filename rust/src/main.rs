@@ -31,6 +31,8 @@ fn main() {
 97,13,75,29,47
 "#;
 
+    // dbg!(atoi_radix10::parse::<u32>(b"123"));
+
     let input = include_str!("../../inputs/day05.txt");
 
     let part2 = day05::part2(input);

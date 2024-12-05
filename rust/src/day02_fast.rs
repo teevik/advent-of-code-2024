@@ -1,20 +1,63 @@
-use crate::IterExt;
+use arrayvec::ArrayVec;
 use bstr::ByteSlice;
 use itertools::Itertools;
+use std::hint::unreachable_unchecked;
 
-fn parse_line(line: &str) -> Vec<i32> {
-    line.split_ascii_whitespace()
-        .map(|number| number.parse::<i32>().expect("invalid input"))
-        .collect()
+pub trait IterExt: Iterator {
+    fn count_when<F>(self, predicate: F) -> usize
+    where
+        F: FnMut(Self::Item) -> bool,
+        Self: Sized;
 }
 
-fn parse_input(input: &str) -> impl Iterator<Item = Vec<i32>> + '_ {
-    input.lines().map(parse_line)
+impl<I: Iterator> IterExt for I {
+    fn count_when<F>(self, mut predicate: F) -> usize
+    where
+        F: FnMut(Self::Item) -> bool,
+    {
+        self.fold(0, |acc, item| if predicate(item) { acc + 1 } else { acc })
+    }
+}
+
+fn combinations_of_arrayvec<T: Clone, const N: usize>(
+    array: ArrayVec<T, N>,
+) -> impl Iterator<Item = ArrayVec<T, N>> {
+    let len = array.len();
+
+    (0..len).map(move |index| {
+        let mut new_array = array.clone();
+        new_array.pop_at(index);
+
+        new_array
+    })
+}
+
+fn parse_input(input: &str) -> impl Iterator<Item = ArrayVec<i32, 8>> + '_ {
+    let lines = input.as_bytes().lines();
+
+    lines.map(|line| {
+        line.split_str(b" ")
+            .map(|number| {
+                match number {
+                    &[first, second] => {
+                        let first_digit = first - b'0';
+                        let second_digit = second - b'0';
+
+                        (first_digit * 10 + second_digit) as i32
+                    }
+                    &[first] => (first - b'0') as i32,
+                    _ => unsafe { unreachable_unchecked() },
+                }
+
+                // unsafe { atoi_radix10::parse::<i32>(number).unwrap_unchecked() }
+            })
+            .collect()
+    })
 }
 
 fn is_valid(numbers: &[i32]) -> bool {
     let [first, second, ..] = numbers else {
-        panic!("invalid input")
+        unsafe { unreachable_unchecked() }
     };
     let direction = (second - first).signum();
 
@@ -27,36 +70,17 @@ fn is_valid(numbers: &[i32]) -> bool {
 }
 
 pub fn part1(input: &str) -> usize {
-    let lines = input.as_bytes().lines();
-    const LINES: usize = 1000;
-
-    // let lines = lines.map(|line| {
-    //     line.split_str(" ")
-    //         .map(|number| {
-    //             let first_digit = number[0] - b'0';
-    //             let second_digit = number[1] - b'0';
-
-    //             (first_digit * 10 + second_digit) as i32
-    //         })
-    //         .collect()
-    // });
-
-    // let safe_lines = lines.count_when(|numbers| is_valid(&numbers));
-
-    // safe_lines
-    todo!()
+    let lines = parse_input(input);
+    let safe_lines = lines.count_when(|numbers| is_valid(&numbers));
+    safe_lines
 }
 
 pub fn part2(input: &str) -> usize {
     let lines = parse_input(input);
 
     let safe_lines = lines.count_when(|numbers| {
-        let len = numbers.len();
-
-        numbers
-            .into_iter()
-            .combinations(len - 1)
-            .any(|combination| is_valid(&combination))
+        is_valid(&numbers)
+            || combinations_of_arrayvec(numbers).any(|combination| is_valid(&combination))
     });
 
     safe_lines

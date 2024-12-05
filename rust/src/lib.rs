@@ -7,6 +7,7 @@ pub mod day01_fast;
 pub mod day02;
 pub mod day02_fast;
 pub mod day03;
+pub mod day03_fast;
 pub mod day04;
 pub mod day05;
 
