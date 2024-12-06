@@ -10,6 +10,7 @@ pub mod day03;
 pub mod day03_fast;
 pub mod day04;
 pub mod day05;
+pub mod day06;
 
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize
