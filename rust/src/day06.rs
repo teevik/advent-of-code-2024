@@ -1,11 +1,9 @@
-use std::collections::HashSet;
-
-use indicatif::{ParallelProgressIterator, ProgressIterator};
 use ndarray::Array2;
 use rayon::prelude::*;
+use std::collections::HashSet;
 use vek::Vec2;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
     Up,
     Down,
@@ -102,10 +100,7 @@ pub fn part1(input: &str) -> usize {
     visited.insert(player.position);
 
     loop {
-        let next_position = (player.position + player.direction.to_vec());
-        // if next_position.x < 0 || next_position.y < 0 {
-        //     break;
-        // }
+        let next_position = player.position + player.direction.to_vec();
 
         let a = next_position.as_::<usize>().into_tuple();
         match grid.get((a.1, a.0)) {
@@ -128,7 +123,7 @@ pub fn part1(input: &str) -> usize {
 }
 
 pub fn part2(input: &str) -> usize {
-    let (grid, mut player) = parse_grid(input);
+    let (grid, player) = parse_grid(input);
 
     let combinations_with_obstacle = grid.indexed_iter().filter_map(|(index, &value)| {
         if value {
@@ -145,21 +140,15 @@ pub fn part2(input: &str) -> usize {
         Some(grid)
     });
 
-    // let mut sum = 0;
-
-    let count = combinations_with_obstacle.clone().count();
-
     let sum = combinations_with_obstacle
         .par_bridge()
-        .progress_count(count as u64)
         .filter(|grid| {
             let mut player = player.clone();
 
-            let mut visited = HashSet::new();
-            let mut has_visited_same_spot = 0;
+            let mut moved_from = HashSet::new();
 
             loop {
-                let next_position = (player.position + player.direction.to_vec());
+                let next_position = player.position + player.direction.to_vec();
 
                 let a = next_position.as_::<usize>().into_tuple();
                 match grid.get((a.1, a.0)) {
@@ -167,28 +156,19 @@ pub fn part2(input: &str) -> usize {
                         player.direction = player.direction.turn_right();
                     }
                     Some(&false) => {
-                        player.position = next_position;
-                        if visited.contains(&player.position) {
-                            has_visited_same_spot += 1;
-                            if has_visited_same_spot == 100000 {
-                                return true;
-                            }
+                        let newly_inserted = moved_from.insert((player.position, player.direction));
+                        // check if we have been here before
+                        if !newly_inserted {
+                            return true;
                         }
-                        visited.insert(player.position);
+
+                        player.position = next_position;
                     }
                     None => {
                         // out of bounds
                         return false;
                     }
                 }
-
-                // if iterations > 100_000_000 {
-                //     return true;
-                // }
-
-                // if player == player_at_start {
-                //     return true;
-                // }
             }
         })
         .count();

@@ -1,4 +1,3 @@
-#![feature(binary_heap_into_iter_sorted)]
 #![feature(slice_as_chunks)]
 #![feature(portable_simd)]
 
@@ -11,6 +10,7 @@ pub mod day03_fast;
 pub mod day04;
 pub mod day05;
 pub mod day06;
+pub mod day06_fast;
 
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize
