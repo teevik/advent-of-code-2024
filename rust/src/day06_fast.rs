@@ -1,6 +1,7 @@
 #![feature(slice_as_chunks)]
 #![feature(portable_simd)]
 
+use arrayvec::ArrayVec;
 use bitvec::bitarr;
 use memchr::memchr;
 use num_traits::AsPrimitive;
@@ -129,7 +130,7 @@ pub fn part2(input: &str) -> usize {
     const HEIGHT: usize = 130;
 
     let player_index = unsafe { memchr(b'^', input).unwrap_unchecked() };
-    let player_position = Vec2::new(
+    let initial_player_position = Vec2::new(
         player_index % WIDTH_WITH_NEWLINE,
         player_index / WIDTH_WITH_NEWLINE,
     );
@@ -149,50 +150,78 @@ pub fn part2(input: &str) -> usize {
         (position.y * WIDTH + position.x) * 4 + direction as usize
     }
 
-    let sum = (0..HEIGHT)
-        .into_par_iter()
-        .map(|y| {
-            let mut sum = 0;
-            for x in 0..WIDTH {
-                let mut visited = [false; HEIGHT * WIDTH * 4];
+    let mut visited = ArrayVec::<Vec2<usize>, 10000>::new();
 
-                let obstacle_pos = Vec2::new(x, y);
-                if is_obstacle_at(obstacle_pos) || obstacle_pos == player_position {
-                    continue;
+    {
+        let mut player_position = initial_player_position;
+        // unsafe { visited.set_unchecked(position_to_index(player_position), true) };
+        // visited.push(player_position); // TODO unchecked
+        let mut player_direction = Direction::Up;
+
+        loop {
+            let next_position = player_position.as_::<i32>() + player_direction.to_vec();
+            if next_position.x < 0 || next_position.y < 0 {
+                break;
+            }
+            let next_position = next_position.as_::<usize>();
+            if next_position.x >= WIDTH || next_position.y >= HEIGHT {
+                break;
+            }
+
+            if is_obstacle_at(next_position) {
+                player_direction = player_direction.turn_right();
+            } else {
+                player_position = next_position;
+                if !visited.contains(&player_position) && player_position != initial_player_position
+                {
+                    visited.push(player_position); // TODO unchecked
+                }
+                // unsafe { visited.set_unchecked(position_to_index(player_position), true) };
+            }
+        }
+    }
+
+    let sum = visited
+        .into_par_iter()
+        .map(|&obstacle_pos| {
+            let mut visited = [false; HEIGHT * WIDTH * 4];
+
+            if obstacle_pos == initial_player_position {
+                return 0;
+            }
+
+            let mut player_position = initial_player_position;
+            let mut player_direction = Direction::Up;
+
+            loop {
+                let next_position = player_position.as_::<i32>() + player_direction.to_vec();
+                if next_position.x < 0 || next_position.y < 0 {
+                    break;
                 }
 
-                let mut player_position = player_position;
-                let mut player_direction = Direction::Up;
+                let next_position = next_position.as_::<usize>();
+                if next_position.x >= WIDTH || next_position.y >= HEIGHT {
+                    break;
+                }
 
-                loop {
-                    let next_position = player_position.as_::<i32>() + player_direction.to_vec();
-                    if next_position.x < 0 || next_position.y < 0 {
-                        break;
+                if obstacle_pos == next_position || is_obstacle_at(next_position) {
+                    player_direction = player_direction.turn_right();
+                } else {
+                    let has_been_visited = unsafe {
+                        visited.get_unchecked_mut(position_and_dir_to_index(
+                            player_position,
+                            player_direction,
+                        ))
+                    };
+
+                    if *has_been_visited {
+                        return 1;
+                        // sum += 1;
+                        // break;
                     }
 
-                    let next_position = next_position.as_::<usize>();
-                    if next_position.x >= WIDTH || next_position.y >= HEIGHT {
-                        break;
-                    }
-
-                    if obstacle_pos == next_position || is_obstacle_at(next_position) {
-                        player_direction = player_direction.turn_right();
-                    } else {
-                        let has_been_visited = unsafe {
-                            visited.get_unchecked_mut(position_and_dir_to_index(
-                                player_position,
-                                player_direction,
-                            ))
-                        };
-
-                        if *has_been_visited {
-                            sum += 1;
-                            break;
-                        }
-
-                        *has_been_visited = true;
-                        player_position = next_position;
-                    }
+                    *has_been_visited = true;
+                    player_position = next_position;
                 }
             }
 
