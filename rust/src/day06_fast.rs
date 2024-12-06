@@ -225,7 +225,7 @@ pub fn part2(input: &str) -> usize {
                 }
             }
 
-            sum
+            0
         })
         .sum();
 
