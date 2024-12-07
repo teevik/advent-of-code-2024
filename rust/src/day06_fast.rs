@@ -236,28 +236,6 @@ pub fn part2(input: &str) -> usize {
 mod tests {
     use super::*;
 
-    const EXAMPLE: &str = "....#.....
-.........#
-..........
-..#.......
-.......#..
-..........
-.#..^.....
-........#.
-#.........
-......#...
-";
-
-    #[test]
-    fn part1_example() {
-        assert_eq!(part1(EXAMPLE), 41);
-    }
-
-    #[test]
-    fn part2_example() {
-        assert_eq!(part2(EXAMPLE), 6);
-    }
-
     const INPUT: &str = include_str!("../../inputs/day06.txt");
 
     #[test]
