@@ -45,6 +45,7 @@ bit-set = "0.8"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
+pprof = { version = "0.14", features = ["flamegraph", "criterion"] }
 
 [[bench]]
 name = "aoc_2024"

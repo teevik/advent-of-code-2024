@@ -1,5 +1,6 @@
 use aoc_2024::*;
-use criterion::criterion_main;
+use criterion::{Criterion, criterion_main};
+use pprof::criterion::{Output, PProfProfiler};
 
 macro_rules! bench_day {
     ($c:expr, $day_mod:ident, $input:expr) => {
@@ -24,8 +25,14 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     bench_day!(c, day05, "day05.txt");
     bench_day!(c, day06, "day06.txt");
     bench_day!(c, day06_fast, "day06.txt");
+    bench_day!(c, day07, "day07.txt");
+    bench_day!(c, day07_fast, "day07.txt");
 }
 
-criterion::criterion_group!(benches, criterion_benchmark);
+criterion::criterion_group!(
+    name = benches;
+    config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
+    targets = criterion_benchmark
+);
 
 criterion_main!(benches);
