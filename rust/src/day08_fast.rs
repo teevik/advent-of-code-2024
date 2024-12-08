@@ -1,6 +1,43 @@
+use std::mem::{MaybeUninit, transmute};
+
 const WIDTH: usize = 50;
 const WIDTH_WITH_NEWLINE: usize = WIDTH + 1;
 const HEIGHT: usize = 50;
+
+const CHARACTERS_LEN: usize =
+    (b'Z' - b'A' + 1) as usize + (b'z' - b'a' + 1) as usize + (b'9' - b'0' + 1) as usize;
+
+const CHARACTERS: [u8; CHARACTERS_LEN] = {
+    let mut array = [const { MaybeUninit::<u8>::uninit() }; CHARACTERS_LEN];
+
+    let mut i = 0;
+
+    let mut j: u8 = 0;
+    while j < (b'Z' - b'A' + 1) {
+        array[i] = MaybeUninit::new(b'A' + j);
+
+        i += 1;
+        j += 1;
+    }
+
+    let mut j: u8 = 0;
+    while j < (b'z' - b'a' + 1) {
+        array[i] = MaybeUninit::new(b'a' + j);
+
+        i += 1;
+        j += 1;
+    }
+
+    let mut j: u8 = 0;
+    while j < (b'9' - b'0' + 1) {
+        array[i] = MaybeUninit::new(b'0' + j);
+
+        i += 1;
+        j += 1;
+    }
+
+    unsafe { transmute(array) }
+};
 
 fn vec_add(a: (usize, usize), b: (usize, usize)) -> (usize, usize) {
     (a.0 + b.0, a.1 + b.1)
@@ -15,17 +52,17 @@ pub fn part1(input: &str) -> u32 {
 
     let mut antinodes: [u64; HEIGHT] = const { [0; HEIGHT] };
 
-    for character in (b'A'..=b'Z').chain(b'a'..=b'z').chain(b'0'..=b'9') {
-        let mut memchr = memchr::Memchr::new(character, input);
+    for character in CHARACTERS {
+        let mut search = memchr::memchr_iter(character, input);
 
-        let a = match memchr.next() {
+        let a = match search.next() {
             Some(a) => a,
             None => continue,
         };
 
-        let b = unsafe { memchr.next().unwrap_unchecked() };
-        let c = unsafe { memchr.next().unwrap_unchecked() };
-        let d = unsafe { memchr.next().unwrap_unchecked() };
+        let b = unsafe { search.next().unwrap_unchecked() };
+        let c = unsafe { search.next().unwrap_unchecked() };
+        let d = unsafe { search.next().unwrap_unchecked() };
 
         let indices = [a, b, c, d];
         let [a_pos, b_pos, c_pos, d_pos] = indices.map(|index| {
@@ -45,7 +82,6 @@ pub fn part1(input: &str) -> u32 {
         ];
 
         for (a, b) in combinations {
-            // let delta = b - a;
             let delta = vec_sub(b, a);
 
             let left_antinode = vec_add(b, delta);
@@ -71,17 +107,17 @@ pub fn part2(input: &str) -> u32 {
 
     let mut antinodes: [u64; HEIGHT] = const { [0; HEIGHT] };
 
-    for character in (b'A'..=b'Z').chain(b'a'..=b'z').chain(b'0'..=b'9') {
-        let mut memchr = memchr::Memchr::new(character, input);
+    for &character in &CHARACTERS {
+        let mut search = memchr::memchr_iter(character, input);
 
-        let a = match memchr.next() {
+        let a = match search.next() {
             Some(a) => a,
             None => continue,
         };
 
-        let b = unsafe { memchr.next().unwrap_unchecked() };
-        let c = unsafe { memchr.next().unwrap_unchecked() };
-        let d = unsafe { memchr.next().unwrap_unchecked() };
+        let b = unsafe { search.next().unwrap_unchecked() };
+        let c = unsafe { search.next().unwrap_unchecked() };
+        let d = unsafe { search.next().unwrap_unchecked() };
 
         let indices = [a, b, c, d];
         let [a_pos, b_pos, c_pos, d_pos] = indices.map(|index| {
