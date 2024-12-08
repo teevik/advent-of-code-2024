@@ -1,12 +1,14 @@
-use vek::{Aabr, Vec2};
-
 const WIDTH: usize = 50;
 const WIDTH_WITH_NEWLINE: usize = WIDTH + 1;
 const HEIGHT: usize = 50;
-const BOUNDS: Aabr<i32> = Aabr {
-    min: Vec2::new(0, 0),
-    max: Vec2::new(WIDTH as i32 - 1, HEIGHT as i32 - 1),
-};
+
+fn vec_add(a: (usize, usize), b: (usize, usize)) -> (usize, usize) {
+    (a.0 + b.0, a.1 + b.1)
+}
+
+fn vec_sub(a: (usize, usize), b: (usize, usize)) -> (usize, usize) {
+    (a.0.wrapping_sub(b.0), a.1.wrapping_sub(b.1))
+}
 
 pub fn part1(input: &str) -> u32 {
     let input = input.as_bytes();
@@ -30,7 +32,7 @@ pub fn part1(input: &str) -> u32 {
             let x = index % WIDTH_WITH_NEWLINE;
             let y = index / WIDTH_WITH_NEWLINE;
 
-            Vec2::new(x as i32, y as i32)
+            (x, y)
         });
 
         let combinations = [
@@ -43,19 +45,20 @@ pub fn part1(input: &str) -> u32 {
         ];
 
         for (a, b) in combinations {
-            let delta = b - a;
+            // let delta = b - a;
+            let delta = vec_sub(b, a);
 
-            let left_antinode = b + delta;
-            let right_antinode = a - delta;
+            let left_antinode = vec_add(b, delta);
+            let right_antinode = vec_sub(a, delta);
 
-            if BOUNDS.contains_point(left_antinode) {
-                let spot = unsafe { antinodes.get_unchecked_mut(left_antinode.y as usize) };
-                *spot |= 1 << left_antinode.x;
+            if left_antinode.0 < WIDTH && left_antinode.1 < HEIGHT {
+                let spot = unsafe { antinodes.get_unchecked_mut(left_antinode.1) };
+                *spot |= 1 << left_antinode.0;
             }
 
-            if BOUNDS.contains_point(right_antinode) {
-                let spot = unsafe { antinodes.get_unchecked_mut(right_antinode.y as usize) };
-                *spot |= 1 << right_antinode.x;
+            if right_antinode.0 < WIDTH && right_antinode.1 < HEIGHT {
+                let spot = unsafe { antinodes.get_unchecked_mut(right_antinode.1) };
+                *spot |= 1 << right_antinode.0;
             }
         }
     }
@@ -85,7 +88,7 @@ pub fn part2(input: &str) -> u32 {
             let x = index % WIDTH_WITH_NEWLINE;
             let y = index / WIDTH_WITH_NEWLINE;
 
-            Vec2::new(x as i32, y as i32)
+            (x, y)
         });
 
         let combinations = [
@@ -98,22 +101,23 @@ pub fn part2(input: &str) -> u32 {
         ];
 
         for (a, b) in combinations {
-            let delta = b - a;
+            let delta = vec_sub(b, a);
 
             let mut a = a;
             let mut b = b;
 
-            while BOUNDS.contains_point(a) {
-                let spot = unsafe { antinodes.get_unchecked_mut(a.y as usize) };
-                *spot |= 1 << a.x;
+            while a.0 < WIDTH && a.1 < HEIGHT {
+                let spot = unsafe { antinodes.get_unchecked_mut(a.1) };
+                *spot |= 1 << a.0;
 
-                a -= delta;
+                a = vec_sub(a, delta);
             }
 
-            while BOUNDS.contains_point(b) {
-                let spot = unsafe { antinodes.get_unchecked_mut(b.y as usize) };
-                *spot |= 1 << b.x;
-                b += delta;
+            while b.0 < WIDTH && b.1 < HEIGHT {
+                let spot = unsafe { antinodes.get_unchecked_mut(b.1) };
+                *spot |= 1 << b.0;
+
+                b = vec_add(b, delta);
             }
         }
     }
