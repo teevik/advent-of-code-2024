@@ -1,5 +1,8 @@
 #![feature(slice_as_chunks)]
 #![feature(portable_simd)]
+#![allow(unused_attributes)]
+#![feature(avx512_target_feature)]
+#![feature(slice_ptr_get)]
 
 pub mod day01;
 pub mod day01_fast;
@@ -17,6 +20,8 @@ pub mod day08;
 pub mod day08_fast;
 pub mod day08_fast_wip;
 pub mod day09;
+pub mod day10;
+pub mod day10_fast;
 
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize
