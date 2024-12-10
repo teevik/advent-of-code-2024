@@ -1,36 +1,41 @@
 use arrayvec::ArrayVec;
 use memchr::Memchr;
-use std::num::NonZeroUsize;
+use std::num::NonZero;
 
-const MAX_SIZE: usize = 63;
+const MAX_SIZE: usize = 64;
 
-fn divrem(a: usize, b: NonZeroUsize) -> (usize, usize) {
+type Position = u32;
+type IPosition = i32;
+
+fn divrem(a: Position, b: NonZero<Position>) -> (Position, Position) {
     (a / b, a % b)
 }
 
 fn search_trail_iter(
     grid: &[u8],
-    start_position: usize,
+    start_position: Position,
     start_cell: u8,
-    width_with_newline: usize,
-    mut found_trail_end: impl FnMut(usize),
+    width_with_newline: Position,
+    mut found_trail_end: impl FnMut(Position),
 ) {
-    let neighbors: [isize; 4] = [
+    let len = grid.len() as Position;
+
+    let neighbors: [IPosition; 4] = [
         -1,
         1,
-        -(width_with_newline as isize),
-        width_with_newline as isize,
+        -(width_with_newline as IPosition),
+        width_with_newline as IPosition,
     ];
 
-    let mut queue = ArrayVec::<(usize, u8), 20>::new();
+    let mut queue = ArrayVec::<(Position, u8), 20>::new();
     queue.push((start_position, start_cell));
 
     while let Some((start_position, start_cell)) = queue.pop() {
-        for neighbor in neighbors {
-            let target_position = (start_position as isize + neighbor) as usize;
+        for neighbor in &neighbors {
+            let target_position = (start_position as IPosition + neighbor) as Position;
 
-            if target_position < grid.len() {
-                let target_cell = *unsafe { grid.get_unchecked(target_position) };
+            if target_position < len {
+                let target_cell = *unsafe { grid.get_unchecked(target_position as usize) };
 
                 if target_cell == start_cell + 1 {
                     if target_cell == b'9' {
@@ -46,9 +51,9 @@ fn search_trail_iter(
 
 pub fn part1(input: &str) -> u32 {
     let input = input.as_bytes();
-    let size = unsafe { memchr::memchr(b'\n', input).unwrap_unchecked() };
+    let size = unsafe { memchr::memchr(b'\n', input).unwrap_unchecked() } as Position;
     let width_with_newline = size + 1;
-    let width_with_newline = unsafe { NonZeroUsize::new_unchecked(width_with_newline) };
+    let width_with_newline = unsafe { NonZero::new_unchecked(width_with_newline) };
 
     let search = Memchr::new(b'0', input);
 
@@ -60,7 +65,7 @@ pub fn part1(input: &str) -> u32 {
 
         search_trail_iter(
             input,
-            start,
+            start as Position,
             cell,
             width_with_newline.get(),
             |target_position| {
@@ -82,7 +87,7 @@ pub fn part1(input: &str) -> u32 {
 
 pub fn part2(input: &str) -> u32 {
     let input = input.as_bytes();
-    let size = unsafe { memchr::memchr(b'\n', input).unwrap_unchecked() };
+    let size = unsafe { memchr::memchr(b'\n', input).unwrap_unchecked() } as Position;
     let width_with_newline = size + 1;
 
     let search = Memchr::new(b'0', input);
@@ -92,7 +97,7 @@ pub fn part2(input: &str) -> u32 {
     for start in search {
         let cell = *unsafe { input.get_unchecked(start) };
 
-        search_trail_iter(input, start, cell, width_with_newline, |_| {
+        search_trail_iter(input, start as Position, cell, width_with_newline, |_| {
             sum += 1;
         });
     }
@@ -172,40 +177,40 @@ mod tests {
 //     }
 // }
 
-/// Recursively search trails
-fn search_trail(
-    grid: &[u8],
-    start_position: usize,
-    start_cell: u8,
-    width_with_newline: usize,
-    found_trail_end: &mut impl FnMut(usize),
-) {
-    let neighbors: [isize; 4] = [
-        -1,
-        1,
-        -(width_with_newline as isize),
-        width_with_newline as isize,
-    ];
+// /// Recursively search trails
+// fn search_trail(
+//     grid: &[u8],
+//     start_position: usize,
+//     start_cell: u8,
+//     width_with_newline: usize,
+//     found_trail_end: &mut impl FnMut(usize),
+// ) {
+//     let neighbors: [isize; 4] = [
+//         -1,
+//         1,
+//         -(width_with_newline as isize),
+//         width_with_newline as isize,
+//     ];
 
-    for neighbor in neighbors {
-        let target_position = (start_position as isize + neighbor) as usize;
+//     for neighbor in neighbors {
+//         let target_position = (start_position as isize + neighbor) as usize;
 
-        if target_position < grid.len() {
-            let target_cell = *unsafe { grid.get_unchecked(target_position) };
+//         if target_position < grid.len() {
+//             let target_cell = *unsafe { grid.get_unchecked(target_position) };
 
-            if target_cell == start_cell + 1 {
-                if target_cell == b'9' {
-                    found_trail_end(target_position);
-                } else {
-                    search_trail(
-                        grid,
-                        target_position,
-                        target_cell,
-                        width_with_newline,
-                        found_trail_end,
-                    );
-                }
-            }
-        }
-    }
-}
+//             if target_cell == start_cell + 1 {
+//                 if target_cell == b'9' {
+//                     found_trail_end(target_position);
+//                 } else {
+//                     search_trail(
+//                         grid,
+//                         target_position,
+//                         target_cell,
+//                         width_with_newline,
+//                         found_trail_end,
+//                     );
+//                 }
+//             }
+//         }
+//     }
+// }
