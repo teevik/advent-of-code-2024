@@ -1,7 +1,60 @@
-use memchr::Memchr;
+use memchr::{Memchr, arch::x86_64};
 
 const SIZE: usize = 58;
 const WIDTH_WITH_NEWLINE: usize = SIZE + 1;
+
+/// Recursively search trails
+fn search_trail(grid: &[u8], start_position: usize, start_cell: u8, ends: &mut [u64; SIZE]) {
+    const NEIGHBORS: [isize; 4] = [
+        -1,
+        1,
+        -(WIDTH_WITH_NEWLINE as isize),
+        WIDTH_WITH_NEWLINE as isize,
+    ];
+
+    for neighbor in NEIGHBORS {
+        let target_position = (start_position as isize + neighbor) as usize;
+
+        if target_position < const { WIDTH_WITH_NEWLINE * SIZE } {
+            let target_cell = *unsafe { grid.get_unchecked(target_position) };
+
+            if target_cell == start_cell + 1 {
+                if target_cell == b'9' {
+                    // let n = unsafe { ends.get_unchecked_mut(target_position) };
+                    // *n += 1;
+                    let y = target_position / WIDTH_WITH_NEWLINE;
+                    let x = target_position % WIDTH_WITH_NEWLINE;
+
+                    let row = unsafe { ends.get_unchecked_mut(y) };
+                    *row |= 1 << x;
+                } else {
+                    search_trail(grid, target_position, target_cell, ends);
+                }
+            }
+        }
+    }
+}
+
+pub fn part1(input: &str) -> u32 {
+    let input = input.as_bytes();
+    let search = Memchr::new(b'0', input);
+
+    let mut sum = 0;
+
+    let mut trail_ends = [0u64; SIZE];
+    for start in search {
+        let cell = *unsafe { input.get_unchecked(start) };
+
+        search_trail(input, start, cell, &mut trail_ends);
+
+        for trail_end in &mut trail_ends {
+            sum += trail_end.count_ones();
+            *trail_end = 0;
+        }
+    }
+
+    sum
+}
 
 /// Recursively search trails
 fn search_trail_2(
@@ -35,7 +88,7 @@ fn search_trail_2(
     }
 }
 
-pub fn run(input: &str) -> u32 {
+pub fn part2(input: &str) -> u32 {
     let input = input.as_bytes();
     let search = Memchr::new(b'0', input);
 
