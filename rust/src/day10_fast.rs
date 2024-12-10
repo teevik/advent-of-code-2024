@@ -1,8 +1,12 @@
+#![feature(portable_simd)]
+
 use arrayvec::ArrayVec;
 use memchr::Memchr;
-use std::num::NonZero;
-
-const MAX_SIZE: usize = 64;
+use std::{
+    arch::x86_64::{__m256i, _mm256_extract_epi64, _popcnt64},
+    num::NonZero,
+    simd::u16x16,
+};
 
 type Position = u32;
 type IPosition = i32;
@@ -49,7 +53,7 @@ fn search_trail_iter(
     }
 }
 
-pub fn part1(input: &str) -> u32 {
+pub fn part1(input: &str) -> i32 {
     let input = input.as_bytes();
     let size = unsafe { memchr::memchr(b'\n', input).unwrap_unchecked() } as Position;
     let width_with_newline = size + 1;
@@ -57,10 +61,12 @@ pub fn part1(input: &str) -> u32 {
 
     let search = Memchr::new(b'0', input);
 
-    let mut trail_ends = [0u64; MAX_SIZE];
+    const MAX_SIZE: u32 = 16;
+
     let mut sum = 0;
 
     for start in search {
+        let mut trail_ends = [0u16; MAX_SIZE as usize];
         let cell = *unsafe { input.get_unchecked(start) };
 
         search_trail_iter(
@@ -71,15 +77,35 @@ pub fn part1(input: &str) -> u32 {
             |target_position| {
                 let (y, x) = divrem(target_position, width_with_newline);
 
+                let y = y % MAX_SIZE;
+                let x = x % MAX_SIZE;
+
                 let row = unsafe { trail_ends.get_unchecked_mut(y as usize) };
                 *row |= 1 << x;
             },
         );
 
-        for trail_end in &mut trail_ends {
-            sum += trail_end.count_ones();
-            *trail_end = 0;
-        }
+        // sum += trail_ends
+        //     .iter()
+        //     .map(|trail_end| trail_end.count_ones())
+        //     .sum::<u32>();
+
+        let simd = u16x16::from_array(trail_ends);
+        let simd = __m256i::from(simd);
+
+        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 0)) };
+        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 1)) };
+        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 2)) };
+        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 3)) };
+
+        // sum += pog_sum;
+
+        // trail_ends.iter_mut().for_each(|trail_end| *trail_end = 0);
+
+        // for trail_end in &mut trail_ends {
+        //     sum += trail_end.count_ones();
+        //     *trail_end = 0;
+        // }
     }
 
     sum
