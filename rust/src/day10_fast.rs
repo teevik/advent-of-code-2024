@@ -13,7 +13,7 @@ fn search_trail_iter(
     start_position: usize,
     start_cell: u8,
     width_with_newline: usize,
-    found_trail_end: &mut impl FnMut(usize),
+    mut found_trail_end: impl FnMut(usize),
 ) {
     let neighbors: [isize; 4] = [
         -1,
@@ -41,22 +41,6 @@ fn search_trail_iter(
                 }
             }
         }
-
-        // macro_rules! check_at {
-        //     ($target_position:expr) => {
-        //         if target_position < grid.len() {
-        //             let target_cell = *unsafe { grid.get_unchecked(target_position) };
-
-        //             if target_cell == start_cell + 1 {
-        //                 if target_cell == b'9' {
-        //                     found_trail_end(target_position);
-        //                 } else {
-        //                     queue.push((target_position, target_cell));
-        //                 }
-        //             }
-        //         }
-        //     };
-        }
     }
 }
 
@@ -68,9 +52,9 @@ pub fn part1(input: &str) -> u32 {
 
     let search = Memchr::new(b'0', input);
 
+    let mut trail_ends = [0u64; MAX_SIZE];
     let mut sum = 0;
 
-    let mut trail_ends = [0u64; MAX_SIZE];
     for start in search {
         let cell = *unsafe { input.get_unchecked(start) };
 
@@ -79,7 +63,7 @@ pub fn part1(input: &str) -> u32 {
             start,
             cell,
             width_with_newline.get(),
-            &mut |target_position| {
+            |target_position| {
                 let (y, x) = divrem(target_position, width_with_newline);
 
                 let row = unsafe { trail_ends.get_unchecked_mut(y as usize) };
@@ -108,7 +92,7 @@ pub fn part2(input: &str) -> u32 {
     for start in search {
         let cell = *unsafe { input.get_unchecked(start) };
 
-        search_trail_iter(input, start, cell, width_with_newline, &mut |_| {
+        search_trail_iter(input, start, cell, width_with_newline, |_| {
             sum += 1;
         });
     }
