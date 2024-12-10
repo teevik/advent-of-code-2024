@@ -1,7 +1,13 @@
+use std::num::NonZeroUsize;
+
 use memchr::Memchr;
 
-const SIZE: usize = 58;
-const WIDTH_WITH_NEWLINE: usize = SIZE + 1;
+// const SIZE: usize = 58;
+// const WIDTH_WITH_NEWLINE: usize = SIZE + 1;
+
+fn divrem(a: usize, b: NonZeroUsize) -> (usize, usize) {
+    (a / b, a % b)
+}
 
 /// Recursively search trails
 fn search_trail(
@@ -45,10 +51,14 @@ pub fn part1(input: &str) -> u32 {
         let cell = *unsafe { input.get_unchecked(start) };
 
         search_trail(input, start, cell, &mut |target_position| {
-            let y = target_position / WIDTH_WITH_NEWLINE;
-            let x = target_position % WIDTH_WITH_NEWLINE;
+            // let y = target_position / WIDTH_WITH_NEWLINE;
+            // let x = target_position % WIDTH_WITH_NEWLINE;
+            let (y, x) = divrem(
+                target_position,
+                const { unsafe { NonZeroUsize::new_unchecked(WIDTH_WITH_NEWLINE) } },
+            );
 
-            let row = unsafe { trail_ends.get_unchecked_mut(y) };
+            let row = unsafe { trail_ends.get_unchecked_mut(y as usize) };
             *row |= 1 << x;
         });
 

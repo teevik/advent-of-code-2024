@@ -29,6 +29,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     bench_day!(c, day07_fast, "day07.txt");
     bench_day!(c, day08, "day08.txt");
     bench_day!(c, day08_fast, "day08.txt");
+    bench_day!(c, day10_fast, "day10.txt");
 }
 
 criterion::criterion_group!(
