@@ -108,7 +108,7 @@ pub fn part2(input: &str) -> u32 {
 mod tests {
     use super::*;
 
-    const INPUT: &str = include_str!("../../inputs/day01.txt");
+    const INPUT: &str = include_str!("../../../inputs/day01.txt");
 
     #[test]
     fn part1_real() {

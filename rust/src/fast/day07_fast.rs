@@ -116,7 +116,7 @@ mod tests {
         assert_eq!(part2(EXAMPLE), 11387);
     }
 
-    const INPUT: &str = include_str!("../../inputs/day07.txt");
+    const INPUT: &str = include_str!("../../../inputs/day07.txt");
 
     #[test]
     fn part1_real() {

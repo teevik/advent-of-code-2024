@@ -236,7 +236,7 @@ pub fn part2(input: &str) -> usize {
 mod tests {
     use super::*;
 
-    const INPUT: &str = include_str!("../../inputs/day06.txt");
+    const INPUT: &str = include_str!("../../../inputs/day06.txt");
 
     #[test]
     fn part1_real() {
