@@ -3,7 +3,9 @@
 #![feature(slice_ptr_get)]
 #![feature(stdarch_x86_avx512)]
 #![feature(stdarch_x86_mm_shuffle)]
+#![feature(core_intrinsics)]
 #![allow(long_running_const_eval)]
+#![allow(internal_features)]
 
 pub mod day01;
 pub mod day01_fast;

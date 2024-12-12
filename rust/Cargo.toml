@@ -4,52 +4,51 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# aoc-runner = "0.3.0"
-# aoc-runner-derive = "0.3.0"
-itertools = "0.12"
-nom = "7"
+vek = "0.17"
+indicatif = { version = "0.17", features = ["rayon"] }
+cached = "0.54"
+ndarray = { version = "0.16.1", features = ["rayon"] }
 
+# ferris-elf
+itertools = "0.13"
+nom = "7"
+rayon = "1"
+memchr = "2"
+arrayvec = "0.7"
+rustc-hash = { version = "2.1", features = ["nightly"] }
+bitvec = "1"
+atoi_radix10 = { git = "https://github.com/gilescope/atoi_radix10" }
+bytemuck = { version = "1", features = ["must_cast", "nightly_portable_simd", "derive"] }
+atoi_simd = "0.16"
+bstr = "1"
+num = "0.4"
+num-traits = "0.2"
+radsort = "0.1"
+bit-set = "0.8"
 
 # ahash = { version = "0.8" }
 # t1ha = { version = "0.1" }
-# bytemuck = { version = "1", features = ["derive"] }
 # itertools = "0.13"
-rayon = "1"
 # regex = "1"
 # parse-display = "0.10"
-memchr = "2"
 # core_simd = { git = "https://github.com/rust-lang/portable-simd" }
-arrayvec = "0.7"
 # smallvec = "1"
-rustc-hash = "1"
-bitvec = "1"
 # dashmap = "6"
-atoi_radix10 = { git = "https://github.com/gilescope/atoi_radix10" }
 # btoi = "0.4"
-# nom = "7"
 # rangemap = "1"
 # flume = "0.11"
 # pollster = "0.4"
 # #wgpu = "0.18"
 # mimalloc = { version = "0.1", default-features = false }
-bstr = "1"
-num = "0.4"
-num-traits = "0.2"
 # roots = "0.0.8"
-radsort = "0.1"
-ndarray = { version = "0.16.1", features = ["rayon"] }
-vek = "0.17.1"
-indicatif = { version = "0.17.9", features = ["rayon"] }
 # pathfinding = "4"
-bit-set = "0.8"
-cached = "0.54.0"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 pprof = { version = "0.14", features = ["flamegraph", "criterion"] }
 
 [[bench]]
-name = "aoc_2024"
+name = "bench"
 harness = false
 
 [profile.release]
