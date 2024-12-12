@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 fn parse_grid(input: &str) -> Array2<char> {
     let grid = input
         .lines()
-        .map(|(line)| line.chars().collect::<Vec<_>>())
+        .map(|line| line.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
     let height = grid.len();
