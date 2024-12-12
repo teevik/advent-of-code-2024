@@ -1,7 +1,6 @@
 use bstr::ByteSlice;
 use itertools::Itertools;
-use num_traits::AsPrimitive;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use vek::{Aabr, Vec2};
 
 /// Recursively search trails

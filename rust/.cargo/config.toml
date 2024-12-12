@@ -1,2 +1,3 @@
 [build]
-rustflags = ["-Ctarget-cpu=native"]
+linker = "clang"
+rustflags = ["-Ctarget-cpu=native", "-Clink-arg=-fuse-ld=lld", "-Clink-arg=-Wl,--no-rosegment", "-Zthreads=32"]

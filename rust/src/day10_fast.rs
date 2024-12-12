@@ -1,20 +1,38 @@
 #![feature(portable_simd)]
+// #![feature(stdarch_x86_avx512)]
+// #![feature(stdarch_x86_mm_shuffle)]
 
 use arrayvec::ArrayVec;
 use memchr::Memchr;
 use std::{
-    arch::x86_64::{__m256i, _mm256_extract_epi64, _popcnt64},
     num::NonZero,
-    simd::u16x16,
+    simd::{Simd, num::SimdInt},
 };
 
 type Position = u32;
 type IPosition = i32;
 
+#[inline(always)]
 fn divrem(a: Position, b: NonZero<Position>) -> (Position, Position) {
     (a / b, a % b)
 }
 
+// fn popcnt_256(simd: __m256i) -> i64 {
+//     let popcnt = unsafe { _mm256_popcnt_epi64(simd) };
+
+//     let sum = unsafe {
+//         _mm_add_epi64(
+//             _mm256_castsi256_si128(popcnt),
+//             _mm256_extracti128_si256(popcnt, 1),
+//         )
+//     };
+
+//     let sum = unsafe { _mm_add_epi64(sum, _mm_shuffle_epi32(sum, _MM_SHUFFLE(1, 0, 3, 2))) };
+
+//     unsafe { _mm_cvtsi128_si64(sum) }
+// }
+
+#[inline(always)]
 fn search_trail_iter(
     grid: &[u8],
     start_position: Position,
@@ -24,23 +42,23 @@ fn search_trail_iter(
 ) {
     let len = grid.len() as Position;
 
-    let neighbors: [IPosition; 4] = [
+    let neighbors = Simd::from_array([
         -1,
         1,
         -(width_with_newline as IPosition),
         width_with_newline as IPosition,
-    ];
+    ]);
 
     let mut queue = ArrayVec::<(Position, u8), 20>::new();
     queue.push((start_position, start_cell));
 
     while let Some((start_position, start_cell)) = queue.pop() {
-        for neighbor in &neighbors {
-            let target_position = (start_position as IPosition + neighbor) as Position;
+        let start_position = Simd::<IPosition, 4>::splat(start_position as IPosition);
+        let target_position = start_position + neighbors;
+        let target_position = target_position.cast::<Position>();
 
-            if target_position < len {
-                let target_cell = *unsafe { grid.get_unchecked(target_position as usize) };
-
+        for &target_position in target_position.as_array() {
+            if let Some(target_cell) = grid.get(target_position as usize).copied() {
                 if target_cell == start_cell + 1 {
                     if target_cell == b'9' {
                         found_trail_end(target_position);
@@ -49,11 +67,23 @@ fn search_trail_iter(
                     }
                 }
             }
+
+            // if likely(target_position < len) {
+            //     let target_cell = *unsafe { grid.get_unchecked(target_position as usize) };
+
+            //     if unlikely(target_cell == start_cell + 1) {
+            //         if unlikely(target_cell == b'9') {
+            //             found_trail_end(target_position);
+            //         } else {
+            //             queue.push((target_position, target_cell));
+            //         }
+            //     }
+            // }
         }
     }
 }
 
-pub fn part1(input: &str) -> i32 {
+pub fn part1(input: &str) -> u16 {
     let input = input.as_bytes();
     let size = unsafe { memchr::memchr(b'\n', input).unwrap_unchecked() } as Position;
     let width_with_newline = size + 1;
@@ -61,7 +91,8 @@ pub fn part1(input: &str) -> i32 {
 
     let search = Memchr::new(b'0', input);
 
-    const MAX_SIZE: u32 = 16;
+    const MAX_SIZE: Position = 16;
+    const MAX_SIZE_NONZERO: NonZero<Position> = unsafe { NonZero::new_unchecked(MAX_SIZE) };
 
     let mut sum = 0;
 
@@ -77,35 +108,49 @@ pub fn part1(input: &str) -> i32 {
             |target_position| {
                 let (y, x) = divrem(target_position, width_with_newline);
 
-                let y = y % MAX_SIZE;
-                let x = x % MAX_SIZE;
+                let y = y % MAX_SIZE_NONZERO;
+                let x = x % MAX_SIZE_NONZERO;
 
                 let row = unsafe { trail_ends.get_unchecked_mut(y as usize) };
                 *row |= 1 << x;
             },
         );
 
-        // sum += trail_ends
-        //     .iter()
-        //     .map(|trail_end| trail_end.count_ones())
-        //     .sum::<u32>();
+        // let simd = u16x16::from_array(trail_ends);
+        // let simd = __m256i::from(simd);
+        // let simd = unsafe { std::mem::transmute(trail_ends) };
 
-        let simd = u16x16::from_array(trail_ends);
-        let simd = __m256i::from(simd);
+        sum += trail_ends
+            .iter()
+            .map(|&x| x.count_ones() as u16)
+            .sum::<u16>();
+        // // let sum_before = sum;
 
-        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 0)) };
-        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 1)) };
-        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 2)) };
-        sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 3)) };
+        // sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 0)) } as u16;
+        // sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 1)) } as u16;
+        // sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 2)) } as u16;
+        // sum += unsafe { _popcnt64(_mm256_extract_epi64(simd, 3)) } as u16;
+        // sum += popcnt_256(simd) as u16;
+        // // dbg!(simd);
+        // let counts = unsafe { _mm256_popcnt_epi64(simd) };
 
-        // sum += pog_sum;
+        // dbg!(sum - sum_before, popcnt_256(simd));
 
-        // trail_ends.iter_mut().for_each(|trail_end| *trail_end = 0);
+        // let mut sum = unsafe {
+        //     _mm_add_epi64(
+        //         _mm256_castsi256_si128(popcnt),
+        //         _mm256_extracti128_si256(popcnt, 1),
+        //     )
+        // };
+        // sum = _mm_add_epi64(sum, _mm_shuffle_epi32(sum, _MM_SHUFFLE(1, 0, 3, 2)));
+        // let
 
-        // for trail_end in &mut trail_ends {
-        //     sum += trail_end.count_ones();
-        //     *trail_end = 0;
-        // }
+        // sum += unsafe { _mm256_extract_epi64(counts, 0) };
+        // sum += unsafe { _mm256_extract_epi64(counts, 1) };
+        // sum += unsafe { _mm256_extract_epi64(counts, 2) };
+        // sum += unsafe { _mm256_extract_epi64(counts, 3) };
+        // // sum += unsafe { _mm256_reduce_add_epi8(counts) } as u32;
+        // dbg!(counts, sum);
     }
 
     sum

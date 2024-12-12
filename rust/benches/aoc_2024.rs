@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use aoc_2024::*;
 use criterion::{Criterion, criterion_main};
 use pprof::criterion::{Output, PProfProfiler};
@@ -30,11 +32,12 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     bench_day!(c, day08, "day08.txt");
     bench_day!(c, day08_fast, "day08.txt");
     bench_day!(c, day10_fast, "day10.txt");
+    bench_day!(c, day11_fast, "day11.txt");
 }
 
 criterion::criterion_group!(
     name = benches;
-    config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Flamegraph(None)));
+    config = Criterion::default().warm_up_time(Duration::from_secs(1)).with_profiler(PProfProfiler::new(1000, Output::Flamegraph(None)));
     targets = criterion_benchmark
 );
 
