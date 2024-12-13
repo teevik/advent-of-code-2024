@@ -335,7 +335,7 @@ mod tests {
     // }
 
     #[cfg(not(debug_assertions))]
-    const INPUT: &str = include_str!("../../inputs/day08.txt");
+    const INPUT: &str = include_str!("../../../inputs/day08.txt");
 
     #[test]
     #[cfg(not(debug_assertions))]
