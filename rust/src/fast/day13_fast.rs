@@ -1,20 +1,31 @@
 #![feature(iter_array_chunks)]
 #![feature(core_intrinsics)]
+#![feature(portable_simd)]
 
-use atoi_simd::{parse_any_pos, parse_pos};
+use atoi_simd::{Parse, parse_any_pos, parse_pos};
 use bstr::ByteSlice;
 use core::str;
-use std::intrinsics::{unchecked_div, unchecked_rem};
+use num::Zero;
+use num_traits::AsPrimitive;
+use std::{
+    intrinsics::{unchecked_div, unchecked_rem},
+    mem::transmute,
+    ops::{Div, Mul, Rem, Sub},
+    simd::{Simd, cmp::SimdPartialEq, i64x8, num::SimdUint, u8x8},
+};
 use vek::Vec2;
 
-#[derive(Debug)]
-struct Equation {
+#[derive(Debug, Clone, Copy)]
+struct Equation<T> {
     a: Vec2<u8>,
     b: Vec2<u8>,
-    p: Vec2<i64>,
+    p: Vec2<T>,
 }
 
-fn parse_input(input: &str) -> impl Iterator<Item = Equation> {
+fn parse_input<T: Copy + 'static>(input: &str) -> impl Iterator<Item = Equation<T>>
+where
+    u16: AsPrimitive<T>,
+{
     let input = input.as_bytes();
 
     // TODO maybe faster way? use memchr?
@@ -62,52 +73,242 @@ fn parse_input(input: &str) -> impl Iterator<Item = Equation> {
     })
 }
 
-fn divrem(a: i64, b: i64) -> (i64, i64) {
-    let div = unsafe { unchecked_div(a, b) };
-    let rem = unsafe { unchecked_rem(a, b) };
+fn divrem<T: Copy + Div + Rem>(a: T, b: T) -> (<T as Div>::Output, <T as Rem>::Output) {
+    let div = a / b;
+    let rem = a % b;
     (div, rem)
 }
 
-fn solve_equation(eq: Equation) -> Option<(i64, i64)> {
+fn solve_equation<T: Copy + 'static>(eq: Equation<T>) -> Option<(T, T)>
+where
+    u8: AsPrimitive<T>,
+    T: Mul<Output = T>,
+    T: Sub<Output = T>,
+    T: Div<Output = T>,
+    T: Rem<Output = T>,
+    T: Zero,
+{
     let Equation { a, b, p } = eq;
-    let a = a.as_::<i64>();
-    let b = b.as_::<i64>();
+    let a = a.as_::<T>();
+    let b = b.as_::<T>();
 
     let (a_presses, remainder) = divrem(b.y * p.x - b.x * p.y, a.x * b.y - a.y * b.x);
-    if remainder != 0 {
+    if !remainder.is_zero() {
         return None;
     }
 
     let (b_presses, remainder) = divrem(a.x * p.y - a.y * p.x, a.x * b.y - a.y * b.x);
-    if remainder != 0 {
+    if !remainder.is_zero() {
         return None;
     }
 
     Some((a_presses, b_presses))
 }
 
-pub fn part1(input: &str) -> usize {
+pub fn part1(input: &str) -> i32 {
     let equations = parse_input(input);
 
-    let price = equations
-        .flat_map(solve_equation)
-        .filter(|&(a, b)| a <= 100 && b <= 100)
-        .map(|(a, b)| (a * 3 + b) as usize)
-        .sum();
+    let mut price = 0;
+
+    type Stuff = i32;
+    const LANES: usize = 16;
+    let mut chunks = equations.array_chunks::<LANES>();
+
+    let zeros = Simd::<Stuff, LANES>::splat(0);
+
+    while let Some(chunk) = chunks.next() {
+        let a_x = chunk.map(|eq| eq.a.x);
+        let a_x = Simd::<u8, LANES>::from_array(a_x);
+        let a_x = a_x.cast::<Stuff>();
+
+        let a_y = chunk.map(|eq| eq.a.y);
+        let a_y = Simd::<u8, LANES>::from_array(a_y);
+        let a_y = a_y.cast::<Stuff>();
+
+        let b_x = chunk.map(|eq| eq.b.x);
+        let b_x = Simd::<u8, LANES>::from_array(b_x);
+        let b_x = b_x.cast::<Stuff>();
+
+        let b_y = chunk.map(|eq| eq.b.y);
+        let b_y = Simd::<u8, LANES>::from_array(b_y);
+        let b_y = b_y.cast::<Stuff>();
+
+        let p_x = chunk.map(|eq| eq.p.x);
+        let p_x = Simd::<Stuff, LANES>::from_array(p_x);
+
+        let p_y = chunk.map(|eq| eq.p.y);
+        let p_y = Simd::<Stuff, LANES>::from_array(p_y);
+
+        let a_presses = (b_y * p_x - b_x * p_y) / (a_x * b_y - a_y * b_x);
+        let a_valid = ((b_y * p_x - b_x * p_y) % (a_x * b_y - a_y * b_x)).simd_eq(zeros);
+        let b_presses = (a_x * p_y - a_y * p_x) / (a_x * b_y - a_y * b_x);
+        let b_valid = ((a_x * p_y - a_y * p_x) % (a_x * b_y - a_y * b_x)).simd_eq(zeros);
+
+        let valid_mask = a_valid & b_valid;
+        let mut mask = valid_mask.to_bitmask();
+
+        let a_presses = a_presses.as_array();
+        let b_presses = b_presses.as_array();
+
+        while mask != 0 {
+            let x = mask.trailing_zeros() as usize;
+
+            let a_press = unsafe { *a_presses.get_unchecked(x) };
+            let b_press = unsafe { *b_presses.get_unchecked(x) };
+
+            price += a_press * 3 + b_press;
+            mask &= !(1 << x);
+        }
+
+        // let b = chunk.map(|eq| eq.b);
+        // let b = unsafe { transmute::<[Vec2<u8>; 8], Simd<u8, 16>>(b) };
+        // let b = b.cast::<i64>();
+
+        // let p = chunk.map(|eq| eq.p);
+        // let p = unsafe { transmute::<[Vec2<i64>; 8], Simd<i64, 16>>(p) };
+
+        // let a_presses = b.y * p.x - b.x * p.y / a.x * b.y - a.y * b.x;
+
+        // let (a_presses, remainder) = divrem(b.y * p.x - b.x * p.y, a.x * b.y - a.y * b.x);
+        // if remainder != 0 {
+        //     return None;
+        // }
+
+        // let (b_presses, remainder) = divrem(a.x * p.y - a.y * p.x, a.x * b.y - a.y * b.x);
+        // if remainder != 0 {
+        //     return None;
+        // }
+    }
+
+    let remainder = chunks.into_remainder();
+    if let Some(chunk) = remainder {
+        for eq in chunk {
+            if let Some((a, b)) = solve_equation(eq) {
+                // if a <= 100 && b <= 100 {
+                price += a * 3 + b;
+                // }
+            }
+        }
+    }
+
+    // let equations = parse_input(input);
+
+    // let price = equations
+    //     .flat_map(solve_equation)
+    //     .filter(|&(a, b)| a <= 100 && b <= 100)
+    //     .map(|(a, b)| a * 3 + b)
+    //     .sum();
 
     price
 }
 
-pub fn part2(input: &str) -> usize {
-    let equations = parse_input(input).map(|eq| Equation {
+// Kan simd parse til en array for hver
+
+pub fn part2(input: &str) -> i64 {
+    let equations = parse_input::<i64>(input).map(|eq| Equation {
         p: eq.p + Vec2::new(10000000000000, 10000000000000),
         ..eq
     });
 
-    let price = equations
-        .flat_map(solve_equation)
-        .map(|(a, b)| (a * 3 + b) as usize)
-        .sum();
+    // let price = equations
+    //     .flat_map(solve_equation)
+    //     .map(|(a, b)| (a * 3 + b))
+    //     .sum();
+
+    // price
+
+    type Stuff = i64;
+
+    let mut price = 0;
+
+    const LANES: usize = 16;
+
+    let mut chunks = equations.array_chunks::<LANES>();
+
+    let zeros = Simd::<Stuff, LANES>::splat(0);
+
+    while let Some(chunk) = chunks.next() {
+        let a_x = chunk.map(|eq| eq.a.x);
+        let a_x = Simd::<u8, LANES>::from_array(a_x);
+        let a_x = a_x.cast::<Stuff>();
+
+        let a_y = chunk.map(|eq| eq.a.y);
+        let a_y = Simd::<u8, LANES>::from_array(a_y);
+        let a_y = a_y.cast::<Stuff>();
+
+        let b_x = chunk.map(|eq| eq.b.x);
+        let b_x = Simd::<u8, LANES>::from_array(b_x);
+        let b_x = b_x.cast::<Stuff>();
+
+        let b_y = chunk.map(|eq| eq.b.y);
+        let b_y = Simd::<u8, LANES>::from_array(b_y);
+        let b_y = b_y.cast::<Stuff>();
+
+        let p_x = chunk.map(|eq| eq.p.x);
+        let p_x = Simd::<Stuff, LANES>::from_array(p_x);
+
+        let p_y = chunk.map(|eq| eq.p.y);
+        let p_y = Simd::<Stuff, LANES>::from_array(p_y);
+
+        let a_presses = (b_y * p_x - b_x * p_y) / (a_x * b_y - a_y * b_x);
+        let a_valid = ((b_y * p_x - b_x * p_y) % (a_x * b_y - a_y * b_x)).simd_eq(zeros);
+        let b_presses = (a_x * p_y - a_y * p_x) / (a_x * b_y - a_y * b_x);
+        let b_valid = ((a_x * p_y - a_y * p_x) % (a_x * b_y - a_y * b_x)).simd_eq(zeros);
+
+        let valid_mask = a_valid & b_valid;
+        let mut mask = valid_mask.to_bitmask();
+
+        let a_presses = a_presses.as_array();
+        let b_presses = b_presses.as_array();
+
+        while mask != 0 {
+            let x = mask.trailing_zeros() as usize;
+
+            let a_press = unsafe { *a_presses.get_unchecked(x) };
+            let b_press = unsafe { *b_presses.get_unchecked(x) };
+
+            price += a_press * 3 + b_press;
+            mask &= !(1 << x);
+        }
+
+        // let b = chunk.map(|eq| eq.b);
+        // let b = unsafe { transmute::<[Vec2<u8>; 8], Simd<u8, 16>>(b) };
+        // let b = b.cast::<i64>();
+
+        // let p = chunk.map(|eq| eq.p);
+        // let p = unsafe { transmute::<[Vec2<i64>; 8], Simd<i64, 16>>(p) };
+
+        // let a_presses = b.y * p.x - b.x * p.y / a.x * b.y - a.y * b.x;
+
+        // let (a_presses, remainder) = divrem(b.y * p.x - b.x * p.y, a.x * b.y - a.y * b.x);
+        // if remainder != 0 {
+        //     return None;
+        // }
+
+        // let (b_presses, remainder) = divrem(a.x * p.y - a.y * p.x, a.x * b.y - a.y * b.x);
+        // if remainder != 0 {
+        //     return None;
+        // }
+    }
+
+    let remainder = chunks.into_remainder();
+    if let Some(chunk) = remainder {
+        for eq in chunk {
+            if let Some((a, b)) = solve_equation(eq) {
+                // if a <= 100 && b <= 100 {
+                price += a * 3 + b;
+                // }
+            }
+        }
+    }
+
+    // let equations = parse_input(input);
+
+    // let price = equations
+    //     .flat_map(solve_equation)
+    //     .filter(|&(a, b)| a <= 100 && b <= 100)
+    //     .map(|(a, b)| a * 3 + b)
+    //     .sum();
 
     price
 }
