@@ -25,6 +25,7 @@ num = "0.4"
 num-traits = "0.2"
 radsort = "0.1"
 bit-set = "0.8"
+image = "0.25.5"
 
 # ahash = { version = "0.8" }
 # t1ha = { version = "0.1" }

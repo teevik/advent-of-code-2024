@@ -12,48 +12,42 @@ use std::{
     simd::{Simd, cmp::SimdPartialEq},
 };
 
-fn divrem(a: i32, b: i32) -> (i32, i32) {
+type Int1 = i64;
+
+#[inline(always)]
+fn divrem_1(a: Int1, b: Int1) -> (Int1, Int1) {
     let div = unsafe { unchecked_div(a, b) };
     let rem = unsafe { unchecked_rem(a, b) };
 
     (div, rem)
 }
 
-pub fn run(input: &str) -> i32 {
+pub fn part1(input: &str) -> Int1 {
     let mut input = input.as_bytes();
 
-    const LANES: usize = 64;
-    const SIZE: usize = 320;
-    const CHUNKS: usize = SIZE / LANES;
-
     let mut sum = 0;
-    for i in 0..320 {
+    for _ in 0..320 {
         // TODO unchecked
-        let a_x = (unsafe { input.get_unchecked(12) } - b'0') * 10
+        let a_x = ((unsafe { input.get_unchecked(12) } - b'0') * 10
             + unsafe { input.get_unchecked(13) }
-            - b'0';
-        let a_y = (unsafe { input.get_unchecked(18) } - b'0') * 10
+            - b'0') as Int1;
+        let a_y = ((unsafe { input.get_unchecked(18) } - b'0') * 10
             + unsafe { input.get_unchecked(19) }
-            - b'0';
+            - b'0') as Int1;
         input = unsafe { input.get_unchecked(const { "Button A: X+33, Y+93\n".len() }..) };
 
-        let b_x = (unsafe { input.get_unchecked(12) } - b'0') * 10
+        let b_x = ((unsafe { input.get_unchecked(12) } - b'0') * 10
             + unsafe { input.get_unchecked(13) }
-            - b'0';
-        let b_y = (unsafe { input.get_unchecked(18) } - b'0') * 10
+            - b'0') as Int1;
+        let b_y = ((unsafe { input.get_unchecked(18) } - b'0') * 10
             + unsafe { input.get_unchecked(19) }
-            - b'0';
+            - b'0') as Int1;
         input = unsafe { input.get_unchecked(const { "Button B: X+98, Y+36\n".len() }..) };
 
         input = unsafe { input.get_unchecked(9..) };
-        let (p_x, offset) = unsafe { parse_any_pos::<i32>(input).unwrap_unchecked() };
+        let (p_x, offset) = unsafe { parse_any_pos::<Int1>(input).unwrap_unchecked() };
         input = unsafe { input.get_unchecked((offset + 4)..) };
-        let (p_y, offset) = unsafe { parse_any_pos::<i32>(input).unwrap_unchecked() };
-
-        let a_x = a_x as i32;
-        let a_y = a_y as i32;
-        let b_x = b_x as i32;
-        let b_y = b_y as i32;
+        let (p_y, offset) = unsafe { parse_any_pos::<Int1>(input).unwrap_unchecked() };
 
         // if i != 319 {
         input = unsafe { input.get_unchecked((offset + 2)..) };
@@ -61,7 +55,7 @@ pub fn run(input: &str) -> i32 {
 
         let right = a_x * b_y - a_y * b_x;
 
-        let (a, is_valid) = divrem(b_y * p_x - b_x * p_y, right);
+        let (a, is_valid) = divrem_1(b_y * p_x - b_x * p_y, right);
 
         if is_valid == 0 {
             let b = unsafe { unchecked_div(a_x * p_y - a_y * p_x, right) };
@@ -73,264 +67,319 @@ pub fn run(input: &str) -> i32 {
     sum
 }
 
-pub fn part1_old(input: &str) -> i32 {
-    type Int = i32;
-    let input = input.as_bytes();
+type Int2 = i64;
 
-    const LANES: usize = 64;
+#[inline(always)]
+fn divrem_2(a: Int2, b: Int2) -> (Int2, Int2) {
+    let div = unsafe { unchecked_div(a, b) };
+    let rem = unsafe { unchecked_rem(a, b) };
 
-    let mut buttons_a_x = ArrayVec::<Int, 320>::new();
-    let mut buttons_a_y = ArrayVec::<Int, 320>::new();
-    let mut buttons_b_x = ArrayVec::<Int, 320>::new();
-    let mut buttons_b_y = ArrayVec::<Int, 320>::new();
-    let mut targets_x = ArrayVec::<Int, 320>::new();
-    let mut targets_y = ArrayVec::<Int, 320>::new();
+    (div, rem)
+}
 
-    let mut search = memchr2_iter(b'+', b'=', input);
+pub fn part2(input: &str) -> Int2 {
+    let mut input = input.as_bytes();
 
-    loop {
-        let Some(a_x_pos) = search.next() else { break };
-        let a_x_pos = a_x_pos + 1;
+    let mut sum = 0;
+    for _ in 0..320 {
+        // TODO unchecked
+        let a_x = ((unsafe { input.get_unchecked(12) } - b'0') * 10
+            + unsafe { input.get_unchecked(13) }
+            - b'0') as Int2;
+        let a_y = ((unsafe { input.get_unchecked(18) } - b'0') * 10
+            + unsafe { input.get_unchecked(19) }
+            - b'0') as Int2;
+        input = unsafe { input.get_unchecked(const { "Button A: X+33, Y+93\n".len() }..) };
 
-        let a_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let b_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let b_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let target_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let target_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+        let b_x = ((unsafe { input.get_unchecked(12) } - b'0') * 10
+            + unsafe { input.get_unchecked(13) }
+            - b'0') as Int2;
+        let b_y = ((unsafe { input.get_unchecked(18) } - b'0') * 10
+            + unsafe { input.get_unchecked(19) }
+            - b'0') as Int2;
+        input = unsafe { input.get_unchecked(const { "Button B: X+98, Y+36\n".len() }..) };
 
-        let a_x = unsafe {
-            parse_pos::<u8>(input.get_unchecked(a_x_pos..a_x_pos + 2)).unwrap_unchecked()
-        };
+        input = unsafe { input.get_unchecked(9..) };
+        let (p_x, offset) = unsafe { parse_any_pos::<Int2>(input).unwrap_unchecked() };
+        input = unsafe { input.get_unchecked((offset + 4)..) };
+        let (p_y, offset) = unsafe { parse_any_pos::<Int2>(input).unwrap_unchecked() };
 
-        let a_y = unsafe {
-            parse_pos::<u8>(input.get_unchecked(a_y_pos..a_y_pos + 2)).unwrap_unchecked()
-        };
-
-        let b_x = unsafe {
-            parse_pos::<u8>(input.get_unchecked(b_x_pos..b_x_pos + 2)).unwrap_unchecked()
-        };
-
-        let b_y = unsafe {
-            parse_pos::<u8>(input.get_unchecked(b_y_pos..b_y_pos + 2)).unwrap_unchecked()
-        };
-
-        let target_x = unsafe {
-            parse_any_pos::<u16>(input.get_unchecked(target_x_pos..))
-                .unwrap_unchecked()
-                .0
-        };
-
-        let target_y = unsafe {
-            parse_any_pos::<u16>(input.get_unchecked(target_y_pos..))
-                .unwrap_unchecked()
-                .0
-        };
-
-        unsafe { buttons_a_x.push_unchecked(a_x as Int) };
-        unsafe { buttons_a_y.push_unchecked(a_y as Int) };
-        unsafe { buttons_b_x.push_unchecked(b_x as Int) };
-        unsafe { buttons_b_y.push_unchecked(b_y as Int) };
-        unsafe { targets_x.push_unchecked(target_x as Int) };
-        unsafe { targets_y.push_unchecked(target_y as Int) };
-    }
-
-    let buttons_a_x = unsafe { buttons_a_x.as_chunks_unchecked::<LANES>() };
-    let buttons_a_y = unsafe { buttons_a_y.as_chunks_unchecked::<LANES>() };
-    let buttons_b_x = unsafe { buttons_b_x.as_chunks_unchecked::<LANES>() };
-    let buttons_b_y = unsafe { buttons_b_y.as_chunks_unchecked::<LANES>() };
-    let targets_x = unsafe { targets_x.as_chunks_unchecked::<LANES>() };
-    let targets_y = unsafe { targets_y.as_chunks_unchecked::<LANES>() };
-
-    let chunks = izip!(
-        buttons_a_x,
-        buttons_a_y,
-        buttons_b_x,
-        buttons_b_y,
-        targets_x,
-        targets_y
-    );
-
-    let mut price = 0;
-    let zeros = Simd::<Int, LANES>::splat(0);
-    let three = Simd::<Int, LANES>::splat(3);
-
-    for (&a_x, &a_y, &b_x, &b_y, &p_x, &p_y) in chunks {
-        let a_x = Simd::<Int, LANES>::from_array(a_x);
-        let a_y = Simd::<Int, LANES>::from_array(a_y);
-        let b_x = Simd::<Int, LANES>::from_array(b_x);
-        let b_y = Simd::<Int, LANES>::from_array(b_y);
-        let p_x = Simd::<Int, LANES>::from_array(p_x);
-        let p_y = Simd::<Int, LANES>::from_array(p_y);
-        // let a_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_x) };
-        // let a_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_y) };
-        // let b_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_x) };
-        // let b_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_y) };
-        // let p_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_x) };
-        // let p_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_y) };
-
-        let left_a = b_y * p_x - b_x * p_y;
-        let left_b = a_x * p_y - a_y * p_x;
+        // if i != 319 {
+        input = unsafe { input.get_unchecked((offset + 2)..) };
+        // }
 
         let right = a_x * b_y - a_y * b_x;
 
-        let a_presses = (left_a) / (right);
-        let a_valid = ((left_a) % (right)).simd_eq(zeros);
-        let b_presses = (left_b) / (right);
-        // let b_valid = ((left_b) % (right)).simd_eq(zeros);
+        let (a, is_valid) = divrem_2(b_y * p_x - b_x * p_y, right);
 
-        // let valid_mask = a_valid & b_valid;
-        let valid_mask = a_valid;
-        let mut mask = valid_mask.to_bitmask();
+        if is_valid == 0 {
+            let b = unsafe { unchecked_div(a_x * p_y - a_y * p_x, right) };
 
-        let results = a_presses * three + b_presses;
-        let results = results.as_array();
-
-        // let a_presses = a_presses.as_array();
-        // let b_presses = b_presses.as_array();
-
-        while mask != 0 {
-            let x = mask.trailing_zeros() as usize;
-
-            price += unsafe { *results.get_unchecked(x) };
-            // let a_press = unsafe { *a_presses.get_unchecked(x) };
-            // let b_press = unsafe { *b_presses.get_unchecked(x) };
-
-            // price += a_press * 3 + b_press;
-            mask &= !(1 << x);
+            sum += a * 3 + b;
         }
     }
 
-    price
+    sum
 }
 
-pub fn part2(input: &str) -> i64 {
-    type Int = i64;
-    let input = input.as_bytes();
+// pub fn part1_old(input: &str) -> i32 {
+//     type Int = i32;
+//     let input = input.as_bytes();
 
-    const LANES: usize = 64;
+//     const LANES: usize = 64;
 
-    let mut buttons_a_x = ArrayVec::<Int, 320>::new();
-    let mut buttons_a_y = ArrayVec::<Int, 320>::new();
-    let mut buttons_b_x = ArrayVec::<Int, 320>::new();
-    let mut buttons_b_y = ArrayVec::<Int, 320>::new();
-    let mut targets_x = ArrayVec::<Int, 320>::new();
-    let mut targets_y = ArrayVec::<Int, 320>::new();
+//     let mut buttons_a_x = ArrayVec::<Int, 320>::new();
+//     let mut buttons_a_y = ArrayVec::<Int, 320>::new();
+//     let mut buttons_b_x = ArrayVec::<Int, 320>::new();
+//     let mut buttons_b_y = ArrayVec::<Int, 320>::new();
+//     let mut targets_x = ArrayVec::<Int, 320>::new();
+//     let mut targets_y = ArrayVec::<Int, 320>::new();
 
-    let mut search = memchr2_iter(b'+', b'=', input);
+//     let mut search = memchr2_iter(b'+', b'=', input);
 
-    loop {
-        let Some(a_x_pos) = search.next() else { break };
-        let a_x_pos = a_x_pos + 1;
+//     loop {
+//         let Some(a_x_pos) = search.next() else { break };
+//         let a_x_pos = a_x_pos + 1;
 
-        let a_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let b_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let b_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let target_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
-        let target_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let a_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let b_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let b_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let target_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let target_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
 
-        let a_x = unsafe {
-            parse_pos::<u8>(input.get_unchecked(a_x_pos..a_x_pos + 2)).unwrap_unchecked()
-        };
+//         let a_x = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(a_x_pos..a_x_pos + 2)).unwrap_unchecked()
+//         };
 
-        let a_y = unsafe {
-            parse_pos::<u8>(input.get_unchecked(a_y_pos..a_y_pos + 2)).unwrap_unchecked()
-        };
+//         let a_y = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(a_y_pos..a_y_pos + 2)).unwrap_unchecked()
+//         };
 
-        let b_x = unsafe {
-            parse_pos::<u8>(input.get_unchecked(b_x_pos..b_x_pos + 2)).unwrap_unchecked()
-        };
+//         let b_x = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(b_x_pos..b_x_pos + 2)).unwrap_unchecked()
+//         };
 
-        let b_y = unsafe {
-            parse_pos::<u8>(input.get_unchecked(b_y_pos..b_y_pos + 2)).unwrap_unchecked()
-        };
+//         let b_y = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(b_y_pos..b_y_pos + 2)).unwrap_unchecked()
+//         };
 
-        let target_x = unsafe {
-            parse_any_pos::<u16>(input.get_unchecked(target_x_pos..))
-                .unwrap_unchecked()
-                .0
-        };
+//         let target_x = unsafe {
+//             parse_any_pos::<u16>(input.get_unchecked(target_x_pos..))
+//                 .unwrap_unchecked()
+//                 .0
+//         };
 
-        let target_y = unsafe {
-            parse_any_pos::<u16>(input.get_unchecked(target_y_pos..))
-                .unwrap_unchecked()
-                .0
-        };
+//         let target_y = unsafe {
+//             parse_any_pos::<u16>(input.get_unchecked(target_y_pos..))
+//                 .unwrap_unchecked()
+//                 .0
+//         };
 
-        unsafe { buttons_a_x.push_unchecked(a_x as Int) };
-        unsafe { buttons_a_y.push_unchecked(a_y as Int) };
-        unsafe { buttons_b_x.push_unchecked(b_x as Int) };
-        unsafe { buttons_b_y.push_unchecked(b_y as Int) };
-        unsafe { targets_x.push_unchecked((target_x as Int) + 10000000000000) };
-        unsafe { targets_y.push_unchecked((target_y as Int) + 10000000000000) };
-    }
+//         unsafe { buttons_a_x.push_unchecked(a_x as Int) };
+//         unsafe { buttons_a_y.push_unchecked(a_y as Int) };
+//         unsafe { buttons_b_x.push_unchecked(b_x as Int) };
+//         unsafe { buttons_b_y.push_unchecked(b_y as Int) };
+//         unsafe { targets_x.push_unchecked(target_x as Int) };
+//         unsafe { targets_y.push_unchecked(target_y as Int) };
+//     }
 
-    let buttons_a_x = unsafe { buttons_a_x.as_chunks_unchecked::<LANES>() };
-    let buttons_a_y = unsafe { buttons_a_y.as_chunks_unchecked::<LANES>() };
-    let buttons_b_x = unsafe { buttons_b_x.as_chunks_unchecked::<LANES>() };
-    let buttons_b_y = unsafe { buttons_b_y.as_chunks_unchecked::<LANES>() };
-    let targets_x = unsafe { targets_x.as_chunks_unchecked::<LANES>() };
-    let targets_y = unsafe { targets_y.as_chunks_unchecked::<LANES>() };
+//     let buttons_a_x = unsafe { buttons_a_x.as_chunks_unchecked::<LANES>() };
+//     let buttons_a_y = unsafe { buttons_a_y.as_chunks_unchecked::<LANES>() };
+//     let buttons_b_x = unsafe { buttons_b_x.as_chunks_unchecked::<LANES>() };
+//     let buttons_b_y = unsafe { buttons_b_y.as_chunks_unchecked::<LANES>() };
+//     let targets_x = unsafe { targets_x.as_chunks_unchecked::<LANES>() };
+//     let targets_y = unsafe { targets_y.as_chunks_unchecked::<LANES>() };
 
-    let chunks = izip!(
-        buttons_a_x,
-        buttons_a_y,
-        buttons_b_x,
-        buttons_b_y,
-        targets_x,
-        targets_y
-    );
+//     let chunks = izip!(
+//         buttons_a_x,
+//         buttons_a_y,
+//         buttons_b_x,
+//         buttons_b_y,
+//         targets_x,
+//         targets_y
+//     );
 
-    let mut price = 0;
-    let zeros = Simd::<Int, LANES>::splat(0);
-    let three = Simd::<Int, LANES>::splat(3);
+//     let mut price = 0;
+//     let zeros = Simd::<Int, LANES>::splat(0);
+//     let three = Simd::<Int, LANES>::splat(3);
 
-    for (&a_x, &a_y, &b_x, &b_y, &p_x, &p_y) in chunks {
-        let a_x = Simd::<Int, LANES>::from_array(a_x);
-        let a_y = Simd::<Int, LANES>::from_array(a_y);
-        let b_x = Simd::<Int, LANES>::from_array(b_x);
-        let b_y = Simd::<Int, LANES>::from_array(b_y);
-        let p_x = Simd::<Int, LANES>::from_array(p_x);
-        let p_y = Simd::<Int, LANES>::from_array(p_y);
-        // let a_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_x) };
-        // let a_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_y) };
-        // let b_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_x) };
-        // let b_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_y) };
-        // let p_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_x) };
-        // let p_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_y) };
+//     for (&a_x, &a_y, &b_x, &b_y, &p_x, &p_y) in chunks {
+//         let a_x = Simd::<Int, LANES>::from_array(a_x);
+//         let a_y = Simd::<Int, LANES>::from_array(a_y);
+//         let b_x = Simd::<Int, LANES>::from_array(b_x);
+//         let b_y = Simd::<Int, LANES>::from_array(b_y);
+//         let p_x = Simd::<Int, LANES>::from_array(p_x);
+//         let p_y = Simd::<Int, LANES>::from_array(p_y);
+//         // let a_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_x) };
+//         // let a_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_y) };
+//         // let b_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_x) };
+//         // let b_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_y) };
+//         // let p_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_x) };
+//         // let p_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_y) };
 
-        let left_a = b_y * p_x - b_x * p_y;
-        let left_b = a_x * p_y - a_y * p_x;
+//         let left_a = b_y * p_x - b_x * p_y;
+//         let left_b = a_x * p_y - a_y * p_x;
 
-        let right = a_x * b_y - a_y * b_x;
+//         let right = a_x * b_y - a_y * b_x;
 
-        let a_presses = (left_a) / (right);
-        let a_valid = ((left_a) % (right)).simd_eq(zeros);
-        let b_presses = (left_b) / (right);
-        let b_valid = ((left_b) % (right)).simd_eq(zeros);
+//         let a_presses = (left_a) / (right);
+//         let a_valid = ((left_a) % (right)).simd_eq(zeros);
+//         let b_presses = (left_b) / (right);
+//         // let b_valid = ((left_b) % (right)).simd_eq(zeros);
 
-        let valid_mask = a_valid & b_valid;
-        let mut mask = valid_mask.to_bitmask();
+//         // let valid_mask = a_valid & b_valid;
+//         let valid_mask = a_valid;
+//         let mut mask = valid_mask.to_bitmask();
 
-        let results = a_presses * three + b_presses;
-        let results = results.as_array();
+//         let results = a_presses * three + b_presses;
+//         let results = results.as_array();
 
-        // let a_presses = a_presses.as_array();
-        // let b_presses = b_presses.as_array();
+//         // let a_presses = a_presses.as_array();
+//         // let b_presses = b_presses.as_array();
 
-        while mask != 0 {
-            let x = mask.trailing_zeros() as usize;
+//         while mask != 0 {
+//             let x = mask.trailing_zeros() as usize;
 
-            price += unsafe { *results.get_unchecked(x) };
-            // let a_press = unsafe { *a_presses.get_unchecked(x) };
-            // let b_press = unsafe { *b_presses.get_unchecked(x) };
+//             price += unsafe { *results.get_unchecked(x) };
+//             // let a_press = unsafe { *a_presses.get_unchecked(x) };
+//             // let b_press = unsafe { *b_presses.get_unchecked(x) };
 
-            // price += a_press * 3 + b_press;
-            mask &= !(1 << x);
-        }
-    }
+//             // price += a_press * 3 + b_press;
+//             mask &= !(1 << x);
+//         }
+//     }
 
-    price
-}
+//     price
+// }
+
+// pub fn part2(input: &str) -> i64 {
+//     type Int = i64;
+//     let input = input.as_bytes();
+
+//     const LANES: usize = 64;
+
+//     let mut buttons_a_x = ArrayVec::<Int, 320>::new();
+//     let mut buttons_a_y = ArrayVec::<Int, 320>::new();
+//     let mut buttons_b_x = ArrayVec::<Int, 320>::new();
+//     let mut buttons_b_y = ArrayVec::<Int, 320>::new();
+//     let mut targets_x = ArrayVec::<Int, 320>::new();
+//     let mut targets_y = ArrayVec::<Int, 320>::new();
+
+//     let mut search = memchr2_iter(b'+', b'=', input);
+
+//     loop {
+//         let Some(a_x_pos) = search.next() else { break };
+//         let a_x_pos = a_x_pos + 1;
+
+//         let a_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let b_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let b_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let target_x_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+//         let target_y_pos = unsafe { search.next().unwrap_unchecked() } + 1;
+
+//         let a_x = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(a_x_pos..a_x_pos + 2)).unwrap_unchecked()
+//         };
+
+//         let a_y = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(a_y_pos..a_y_pos + 2)).unwrap_unchecked()
+//         };
+
+//         let b_x = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(b_x_pos..b_x_pos + 2)).unwrap_unchecked()
+//         };
+
+//         let b_y = unsafe {
+//             parse_pos::<u8>(input.get_unchecked(b_y_pos..b_y_pos + 2)).unwrap_unchecked()
+//         };
+
+//         let target_x = unsafe {
+//             parse_any_pos::<u16>(input.get_unchecked(target_x_pos..))
+//                 .unwrap_unchecked()
+//                 .0
+//         };
+
+//         let target_y = unsafe {
+//             parse_any_pos::<u16>(input.get_unchecked(target_y_pos..))
+//                 .unwrap_unchecked()
+//                 .0
+//         };
+
+//         unsafe { buttons_a_x.push_unchecked(a_x as Int) };
+//         unsafe { buttons_a_y.push_unchecked(a_y as Int) };
+//         unsafe { buttons_b_x.push_unchecked(b_x as Int) };
+//         unsafe { buttons_b_y.push_unchecked(b_y as Int) };
+//         unsafe { targets_x.push_unchecked((target_x as Int) + 10000000000000) };
+//         unsafe { targets_y.push_unchecked((target_y as Int) + 10000000000000) };
+//     }
+
+//     let buttons_a_x = unsafe { buttons_a_x.as_chunks_unchecked::<LANES>() };
+//     let buttons_a_y = unsafe { buttons_a_y.as_chunks_unchecked::<LANES>() };
+//     let buttons_b_x = unsafe { buttons_b_x.as_chunks_unchecked::<LANES>() };
+//     let buttons_b_y = unsafe { buttons_b_y.as_chunks_unchecked::<LANES>() };
+//     let targets_x = unsafe { targets_x.as_chunks_unchecked::<LANES>() };
+//     let targets_y = unsafe { targets_y.as_chunks_unchecked::<LANES>() };
+
+//     let chunks = izip!(
+//         buttons_a_x,
+//         buttons_a_y,
+//         buttons_b_x,
+//         buttons_b_y,
+//         targets_x,
+//         targets_y
+//     );
+
+//     let mut price = 0;
+//     let zeros = Simd::<Int, LANES>::splat(0);
+//     let three = Simd::<Int, LANES>::splat(3);
+
+//     for (&a_x, &a_y, &b_x, &b_y, &p_x, &p_y) in chunks {
+//         let a_x = Simd::<Int, LANES>::from_array(a_x);
+//         let a_y = Simd::<Int, LANES>::from_array(a_y);
+//         let b_x = Simd::<Int, LANES>::from_array(b_x);
+//         let b_y = Simd::<Int, LANES>::from_array(b_y);
+//         let p_x = Simd::<Int, LANES>::from_array(p_x);
+//         let p_y = Simd::<Int, LANES>::from_array(p_y);
+//         // let a_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_x) };
+//         // let a_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(a_y) };
+//         // let b_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_x) };
+//         // let b_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(b_y) };
+//         // let p_x = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_x) };
+//         // let p_y = unsafe { transmute::<[Int; LANES], Simd<Int, LANES>>(p_y) };
+
+//         let left_a = b_y * p_x - b_x * p_y;
+//         let left_b = a_x * p_y - a_y * p_x;
+
+//         let right = a_x * b_y - a_y * b_x;
+
+//         let a_presses = (left_a) / (right);
+//         let a_valid = ((left_a) % (right)).simd_eq(zeros);
+//         let b_presses = (left_b) / (right);
+//         let b_valid = ((left_b) % (right)).simd_eq(zeros);
+
+//         let valid_mask = a_valid & b_valid;
+//         let mut mask = valid_mask.to_bitmask();
+
+//         let results = a_presses * three + b_presses;
+//         let results = results.as_array();
+
+//         // let a_presses = a_presses.as_array();
+//         // let b_presses = b_presses.as_array();
+
+//         while mask != 0 {
+//             let x = mask.trailing_zeros() as usize;
+
+//             price += unsafe { *results.get_unchecked(x) };
+//             // let a_press = unsafe { *a_presses.get_unchecked(x) };
+//             // let b_press = unsafe { *b_presses.get_unchecked(x) };
+
+//             // price += a_press * 3 + b_press;
+//             mask &= !(1 << x);
+//         }
+//     }
+
+//     price
+// }
 
 // // Kan simd parse til en array for hver
 
