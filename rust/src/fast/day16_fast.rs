@@ -1,9 +1,10 @@
+use std::{cmp::Ordering, collections::BinaryHeap};
+
 use arrayvec::ArrayVec;
 use bitvec::bitarr;
 use memchr::memchr;
 use pathfinding::prelude::{astar_bag, dijkstra};
-use rustc_hash::FxHashSet;
-use vek::Vec2;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
@@ -84,10 +85,74 @@ impl Reindeer {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+struct State {
+    cost: usize,
+    reindeer: Reindeer,
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Notice that we flip the ordering on costs.
+        // In case of a tie we compare positions - this step is necessary
+        // to make implementations of `PartialEq` and `Ord` consistent.
+        other.cost.cmp(&self.cost)
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+fn shortest_path(
+    start: Reindeer,
+    goal: usize,
+    is_wall: impl Copy + Fn(usize) -> bool,
+) -> Option<usize> {
+    // dist[node] = current shortest distance from `start` to `node`
+    let mut dist = FxHashMap::with_capacity_and_hasher(50000, FxBuildHasher);
+    let mut heap = BinaryHeap::with_capacity(1000);
+
+    // We're at start, with a zero cost
+    dist.insert(start, 0);
+    heap.push(State {
+        cost: 0,
+        reindeer: start,
+    });
+
+    while let Some(State { cost, reindeer }) = heap.pop() {
+        // Alternatively we could have continued to find all shortest paths
+        if reindeer.position == goal {
+            return Some(cost);
+        }
+
+        // Important as we may have already found a better way
+        if cost > dist.get(&reindeer).copied().unwrap_or(usize::MAX) {
+            continue;
+        }
+
+        for (successor, step_cost) in reindeer.successors(is_wall) {
+            let next = State {
+                cost: cost + step_cost,
+                reindeer: successor,
+            };
+
+            if next.cost < dist.get(&next.reindeer).copied().unwrap_or(usize::MAX) {
+                heap.push(next);
+                dist.insert(next.reindeer, next.cost);
+            }
+        }
+    }
+
+    None
+}
+
 const SIZE: usize = 141;
 const WIDTH_WITH_NEWLINE: usize = SIZE + 1;
 
-fn parse_input(input: &str) -> (usize, usize, impl Fn(usize) -> bool) {
+fn parse_input(input: &str) -> (usize, usize, impl Copy + Fn(usize) -> bool) {
     let input = input.as_bytes();
 
     let start_position = unsafe { memchr(b'S', input).unwrap_unchecked() };
@@ -106,12 +171,13 @@ pub fn part1(input: &str) -> usize {
         direction: Direction::East,
     };
 
-    let result = dijkstra(
-        &reindeer,
-        |r| r.successors(&is_wall),
-        |r| r.position == end_position,
-    );
-    let (_path, cost) = unsafe { result.unwrap_unchecked() };
+    let cost = shortest_path(reindeer, end_position, is_wall).unwrap();
+    // let result = dijkstra(
+    //     &reindeer,
+    //     |r| r.successors(&is_wall),
+    //     |r| r.position == end_position,
+    // );
+    // let (_path, cost) = unsafe { result.unwrap_unchecked() };
 
     cost
 }

@@ -52,8 +52,8 @@ pprof = { version = "0.14", features = ["flamegraph", "criterion"] }
 name = "bench"
 harness = false
 
-[profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
-debug = true
+# [profile.release]
+# lto = true
+# codegen-units = 1
+# panic = "abort"
+# debug = true
