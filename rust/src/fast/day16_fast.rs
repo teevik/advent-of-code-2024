@@ -1,4 +1,5 @@
 use arrayvec::ArrayVec;
+use bitvec::bitarr;
 use memchr::memchr;
 use pathfinding::prelude::{astar_bag, dijkstra};
 use rustc_hash::FxHashSet;
@@ -31,31 +32,31 @@ impl Direction {
         }
     }
 
-    fn as_vec(self) -> Vec2<isize> {
+    fn add_to_position(self, position: usize) -> usize {
         match self {
-            Direction::North => Vec2::new(0, -1),
-            Direction::East => Vec2::new(1, 0),
-            Direction::South => Vec2::new(0, 1),
-            Direction::West => Vec2::new(-1, 0),
+            Direction::North => position - WIDTH_WITH_NEWLINE,
+            Direction::East => position + 1,
+            Direction::South => position + WIDTH_WITH_NEWLINE,
+            Direction::West => position - 1,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Reindeer {
-    position: Vec2<isize>,
+    position: usize,
     direction: Direction,
 }
 
 impl Reindeer {
-    fn left(&self) -> Self {
+    fn left(self) -> Self {
         Reindeer {
             position: self.position,
             direction: self.direction.left(),
         }
     }
 
-    fn right(&self) -> Self {
+    fn right(self) -> Self {
         Reindeer {
             position: self.position,
             direction: self.direction.right(),
@@ -64,12 +65,12 @@ impl Reindeer {
 
     fn forward(&self) -> Self {
         Reindeer {
-            position: self.position + self.direction.as_vec(),
+            position: self.direction.add_to_position(self.position),
             direction: self.direction,
         }
     }
 
-    fn successors(&self, is_wall: impl Fn(Vec2<isize>) -> bool) -> ArrayVec<(Reindeer, usize), 3> {
+    fn successors(self, is_wall: impl Fn(usize) -> bool) -> ArrayVec<(Reindeer, usize), 3> {
         // Left and right are always 1000 steps away
         let mut successors = ArrayVec::from_iter([(self.left(), 1000), (self.right(), 1000)]);
 
@@ -83,28 +84,16 @@ impl Reindeer {
     }
 }
 
-fn parse_input(input: &str) -> (Vec2<isize>, Vec2<isize>, impl Fn(Vec2<isize>) -> bool) {
+const SIZE: usize = 141;
+const WIDTH_WITH_NEWLINE: usize = SIZE + 1;
+
+fn parse_input(input: &str) -> (usize, usize, impl Fn(usize) -> bool) {
     let input = input.as_bytes();
 
-    let width = memchr(b'\n', input).unwrap() as isize;
-    let width_with_newline = width + 1;
+    let start_position = unsafe { memchr(b'S', input).unwrap_unchecked() };
+    let end_position = unsafe { memchr(b'E', input).unwrap_unchecked() };
 
-    let start_position = memchr(b'S', input).unwrap() as isize;
-    let start_position = Vec2::new(
-        start_position % width_with_newline,
-        start_position / width_with_newline,
-    );
-
-    let end_position = memchr(b'E', input).unwrap() as isize;
-    let end_position = Vec2::new(
-        end_position % width_with_newline,
-        end_position / width_with_newline,
-    );
-
-    let is_wall = move |pos: Vec2<isize>| {
-        let index = pos.y * width_with_newline + pos.x;
-        input[index as usize] == b'#'
-    };
+    let is_wall = move |pos: usize| unsafe { *input.get_unchecked(pos) == b'#' };
 
     (start_position, end_position, is_wall)
 }
@@ -117,12 +106,12 @@ pub fn part1(input: &str) -> usize {
         direction: Direction::East,
     };
 
-    let (_path, cost) = dijkstra(
+    let result = dijkstra(
         &reindeer,
         |r| r.successors(&is_wall),
         |r| r.position == end_position,
-    )
-    .unwrap();
+    );
+    let (_path, cost) = unsafe { result.unwrap_unchecked() };
 
     cost
 }
@@ -135,21 +124,22 @@ pub fn part2(input: &str) -> usize {
         direction: Direction::East,
     };
 
-    let (path, _cost) = astar_bag(
+    let result = astar_bag(
         &reindeer,
         |r| r.successors(&is_wall),
         |_| 0,
         |r| r.position == end_position,
-    )
-    .unwrap();
+    );
 
-    let tiles_on_path = path
-        .into_iter()
-        .flatten()
-        .map(|r| r.position)
-        .collect::<FxHashSet<_>>();
+    let (path, _cost) = unsafe { result.unwrap_unchecked() };
 
-    tiles_on_path.len()
+    let mut tiles_on_path = bitarr![0; SIZE * SIZE];
+
+    for reindeer in path.flatten().map(|r| r.position) {
+        unsafe { tiles_on_path.set_unchecked(reindeer, true) };
+    }
+
+    tiles_on_path.count_ones()
 }
 
 #[cfg(test)]
@@ -183,7 +173,7 @@ mod tests {
         assert_eq!(part2(EXAMPLE), 45);
     }
 
-    const INPUT: &str = include_str!("../../inputs/day16.txt");
+    const INPUT: &str = include_str!("../../../inputs/day16.txt");
 
     #[test]
     fn part1_real() {

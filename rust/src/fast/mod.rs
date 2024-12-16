@@ -8,3 +8,4 @@ pub mod day09_fast;
 pub mod day10_fast;
 // pub mod day11_fast;
 pub mod day13_fast;
+pub mod day16_fast;

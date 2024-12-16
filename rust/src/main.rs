@@ -277,15 +277,15 @@ fn main() {
 
     let before = std::time::Instant::now();
 
-    let part1 = day16::part1(input);
+    let part1 = day16_fast::part1(input);
     let duration = before.elapsed();
     println!("part1: {} ({:?})", part1, duration);
-    // assert_eq!(part1, 37297);
+    assert_eq!(part1, 91464);
 
     let before = std::time::Instant::now();
 
-    let part2 = day16::part2(input);
+    let part2 = day16_fast::part2(input);
     let duration = before.elapsed();
     println!("part2: {} ({:?})", part2, duration);
-    // assert_eq!(part2, 83197086729371);
+    assert_eq!(part2, 494);
 }
