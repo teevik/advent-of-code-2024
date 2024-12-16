@@ -26,6 +26,7 @@ num-traits = "0.2"
 radsort = "0.1"
 bit-set = "0.8"
 image = "0.25.5"
+pathfinding = "4"
 
 # ahash = { version = "0.8" }
 # t1ha = { version = "0.1" }
@@ -42,7 +43,6 @@ image = "0.25.5"
 # #wgpu = "0.18"
 # mimalloc = { version = "0.1", default-features = false }
 # roots = "0.0.8"
-# pathfinding = "4"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
