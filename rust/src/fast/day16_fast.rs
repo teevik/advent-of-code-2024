@@ -171,7 +171,7 @@ pub fn part1(input: &str) -> usize {
         direction: Direction::East,
     };
 
-    let cost = shortest_path(reindeer, end_position, is_wall).unwrap();
+    let cost = unsafe { shortest_path(reindeer, end_position, is_wall).unwrap_unchecked() };
     // let result = dijkstra(
     //     &reindeer,
     //     |r| r.successors(&is_wall),
