@@ -50,6 +50,10 @@ struct Reindeer {
 }
 
 impl Reindeer {
+    fn index_of(self) -> usize {
+        (self.position * 4) + self.direction as usize
+    }
+
     fn left(self) -> Self {
         Reindeer {
             position: self.position,
@@ -111,12 +115,14 @@ fn shortest_path(
     goal: usize,
     is_wall: impl Copy + Fn(usize) -> bool,
 ) -> Option<usize> {
+    const MAX_NODES: usize = WIDTH_WITH_NEWLINE * SIZE * 4;
     // dist[node] = current shortest distance from `start` to `node`
-    let mut dist = FxHashMap::with_capacity_and_hasher(50000, FxBuildHasher);
+    // let mut dist = FxHashMap::with_capacity_and_hasher(50000, FxBuildHasher);
+    let mut dist = const { [usize::MAX; MAX_NODES] };
     let mut heap = BinaryHeap::with_capacity(1000);
 
     // We're at start, with a zero cost
-    dist.insert(start, 0);
+    dist[start.index_of()] = 0;
     heap.push(State {
         cost: 0,
         reindeer: start,
@@ -129,7 +135,7 @@ fn shortest_path(
         }
 
         // Important as we may have already found a better way
-        if cost > dist.get(&reindeer).copied().unwrap_or(usize::MAX) {
+        if cost > dist[reindeer.index_of()] {
             continue;
         }
 
@@ -139,9 +145,9 @@ fn shortest_path(
                 reindeer: successor,
             };
 
-            if next.cost < dist.get(&next.reindeer).copied().unwrap_or(usize::MAX) {
+            if next.cost < dist[next.reindeer.index_of()] {
                 heap.push(next);
-                dist.insert(next.reindeer, next.cost);
+                dist[next.reindeer.index_of()] = next.cost;
             }
         }
     }
