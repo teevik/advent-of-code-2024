@@ -4,6 +4,7 @@
 #![feature(stdarch_x86_avx512)]
 #![feature(stdarch_x86_mm_shuffle)]
 #![feature(core_intrinsics)]
+#![feature(iterator_try_collect)]
 #![allow(long_running_const_eval)]
 #![allow(internal_features)]
 
@@ -26,6 +27,7 @@ pub mod day12;
 pub mod day13;
 pub mod day15;
 pub mod day16;
+pub mod day17;
 
 pub trait IterExt: Iterator {
     fn count_when<F>(self, predicate: F) -> usize

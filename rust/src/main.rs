@@ -257,35 +257,25 @@ use vek::{Vec2, Wrap};
 // }
 
 fn main() {
-    let input = include_str!("../../inputs/day16.txt");
-    //     let input = r#"###############
-    // #.......#....E#
-    // #.#.###.#.###.#
-    // #.....#.#...#.#
-    // #.###.#####.#.#
-    // #.#.#.......#.#
-    // #.#.#####.###.#
-    // #...........#.#
-    // ###.#.#####.#.#
-    // #...#.....#.#.#
-    // #.#.#.###.#.#.#
-    // #.....#...#.#.#
-    // #.###.#.#.#.#.#
-    // #S..#.....#...#
-    // ###############
+    let input = include_str!("../../inputs/day17.txt");
+    //     let input = r#"Register A: 2024
+    // Register B: 0
+    // Register C: 0
+
+    // Program: 0,3,5,4,3,0
     // "#;
 
     let before = std::time::Instant::now();
 
-    let part1 = day16_fast::part1(input);
+    let part1 = day17::part1(input);
     let duration = before.elapsed();
     println!("part1: {} ({:?})", part1, duration);
-    assert_eq!(part1, 91464);
+    // assert_eq!(part1, 91464);
 
     let before = std::time::Instant::now();
 
-    let part2 = day16_fast::part2(input);
+    let part2 = day17::part2(input);
     let duration = before.elapsed();
     println!("part2: {} ({:?})", part2, duration);
-    assert_eq!(part2, 494);
+    // assert_eq!(part2, 494);
 }

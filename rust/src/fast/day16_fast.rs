@@ -1,10 +1,8 @@
-use std::{cmp::Ordering, collections::BinaryHeap};
-
 use arrayvec::ArrayVec;
 use bitvec::bitarr;
 use memchr::memchr;
-use pathfinding::prelude::{astar_bag, dijkstra};
-use rustc_hash::{FxBuildHasher, FxHashMap};
+use pathfinding::prelude::astar_bag;
+use std::{cmp::Ordering, collections::BinaryHeap};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum Direction {
@@ -117,7 +115,6 @@ fn shortest_path(
 ) -> Option<usize> {
     const MAX_NODES: usize = WIDTH_WITH_NEWLINE * SIZE * 4;
     // dist[node] = current shortest distance from `start` to `node`
-    // let mut dist = FxHashMap::with_capacity_and_hasher(50000, FxBuildHasher);
     let mut dist = const { [usize::MAX; MAX_NODES] };
     let mut heap = BinaryHeap::with_capacity(1000);
 
@@ -158,7 +155,7 @@ fn shortest_path(
 const SIZE: usize = 141;
 const WIDTH_WITH_NEWLINE: usize = SIZE + 1;
 
-fn parse_input(input: &str) -> (usize, usize, impl Copy + Fn(usize) -> bool) {
+fn parse_input(input: &str) -> (usize, usize, impl Copy + Fn(usize) -> bool + '_) {
     let input = input.as_bytes();
 
     let start_position = unsafe { memchr(b'S', input).unwrap_unchecked() };
@@ -178,12 +175,6 @@ pub fn part1(input: &str) -> usize {
     };
 
     let cost = unsafe { shortest_path(reindeer, end_position, is_wall).unwrap_unchecked() };
-    // let result = dijkstra(
-    //     &reindeer,
-    //     |r| r.successors(&is_wall),
-    //     |r| r.position == end_position,
-    // );
-    // let (_path, cost) = unsafe { result.unwrap_unchecked() };
 
     cost
 }
